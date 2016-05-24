@@ -1,5 +1,6 @@
-package com.eaglesakura.android.camera.internal.camera2;
+package com.eaglesakura.android.camera;
 
+import com.eaglesakura.android.camera.CameraSpec;
 import com.eaglesakura.android.camera.error.CameraAccessFailedException;
 import com.eaglesakura.android.camera.error.CameraException;
 import com.eaglesakura.android.camera.error.CameraNotFoundException;
@@ -11,6 +12,8 @@ import com.eaglesakura.android.camera.spec.FlashMode;
 import com.eaglesakura.android.camera.spec.FocusMode;
 import com.eaglesakura.android.camera.spec.Scene;
 import com.eaglesakura.android.camera.spec.WhiteBalance;
+import com.eaglesakura.android.util.AndroidThreadUtil;
+import com.eaglesakura.lambda.CancelCallback;
 import com.eaglesakura.util.CollectionUtil;
 
 import android.annotation.SuppressLint;
@@ -35,7 +38,7 @@ public class Camera2SpecImpl {
 
     CameraManager mCameraManager;
 
-    public Camera2SpecImpl(Context context) {
+    Camera2SpecImpl(Context context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             throw new IllegalStateException();
         }
@@ -227,8 +230,21 @@ public class Camera2SpecImpl {
 
         return result;
     }
-//    public CameraSpec getSpecs(CancelCallback cancelCallback) {
-//        AndroidThreadUtil.assertBackgroundThread();
-//
-//    }
+
+    static CameraSpec getSpecs(Context context, CameraType type) throws CameraException {
+        CameraSpec result = new CameraSpec(type);
+
+        Camera2SpecImpl impl = new Camera2SpecImpl(context);
+        CameraCharacteristics spec = impl.getCameraSpec(type);
+
+        result.mFlashModeSpecs = impl.getFlashModes(spec);
+        result.mFocusModeSpecs = impl.getFocusModes(spec);
+        result.mJpegPictureSize = impl.getPictureSizes(spec, CaptureFormat.Jpeg);
+        result.mRawPictureSize = impl.getPictureSizes(spec, CaptureFormat.Raw);
+        result.mPreviewSizes = impl.getPreviewSizes(spec);
+        result.mSceneSpecs = impl.getScenes(spec);
+        result.mWhiteBalanceSpecs = impl.getWhiteBalances(spec);
+
+        return result;
+    }
 }

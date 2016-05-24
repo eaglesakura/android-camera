@@ -1,5 +1,6 @@
-package com.eaglesakura.android.camera.internal.camera2;
+package com.eaglesakura.android.camera;
 
+import com.eaglesakura.android.camera.Camera2SpecImpl;
 import com.eaglesakura.android.camera.log.CameraLog;
 import com.eaglesakura.android.camera.spec.CameraType;
 import com.eaglesakura.android.camera.spec.CaptureSize;
