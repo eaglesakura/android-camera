@@ -26,7 +26,7 @@ public abstract class CameraManager {
     /**
      * カメラプレビューを開始する
      */
-    public abstract void startPreview(Surface surface, CancelCallback cancelCallback) throws CameraException;
+    public abstract void startPreview(Surface surface) throws CameraException;
 
     /**
      * カメラプレビューを停止する

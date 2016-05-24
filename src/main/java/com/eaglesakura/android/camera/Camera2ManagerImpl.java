@@ -102,15 +102,20 @@ class Camera2ManagerImpl extends CameraManager {
 
         try {
             stopPreview();
+        } catch (Exception e) {
+
+        }
+
+        try {
             mCamera.close();
             mCamera = null;
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
     }
 
     @Override
-    public void startPreview(Surface surface, CancelCallback cancelCallback) throws CameraException {
+    public void startPreview(Surface surface) throws CameraException {
         AndroidThreadUtil.assertBackgroundThread();
 
         try {
