@@ -35,7 +35,7 @@ android {
     }
 
     defaultConfig {
-        minSdkVersion 10
+        minSdkVersion 14
         targetSdkVersion 23
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
@@ -65,12 +65,14 @@ if (!hasProperty("EGLIBRARY_COMPILE_LOCAL")) {
 dependencies {
     if (EGLIBRARY_COMPILE_LOCAL) {
         compile project(":eglibrary:android-simple-utils")
+        compile project(":eglibrary:android-thread")
         compile project(":eglibrary:android-egl")
 
         androidTestCompile project(":eglibrary:android-devicetest-support")
         testCompile project(":eglibrary:android-unittest-support")
     } else {
         compile project("com.eaglesakura:android-simple-utils:1.+")
+        compile project("com.eaglesakura:android-thread:1.+")
         compile project("com.eaglesakura:android-egl:1.+")
 
         androidTestCompile 'com.eaglesakura:android-devicetest-support:1.+'

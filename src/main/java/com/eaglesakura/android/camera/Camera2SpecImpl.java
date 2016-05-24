@@ -34,9 +34,11 @@ import java.util.List;
 @SuppressLint("NewApi")
 public class Camera2SpecImpl {
 
-    Context mContext;
+    private Context mContext;
 
-    CameraManager mCameraManager;
+    private CameraManager mCameraManager;
+
+    private String mCameraId;
 
     Camera2SpecImpl(Context context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
@@ -47,14 +49,24 @@ public class Camera2SpecImpl {
         mCameraManager = (CameraManager) mContext.getSystemService(Context.CAMERA_SERVICE);
     }
 
+    CameraManager getCameraManager() {
+        return mCameraManager;
+    }
+
+    String getCameraId() {
+        return mCameraId;
+    }
+
     CameraCharacteristics getCameraSpec(CameraType type) throws CameraException {
         try {
             for (String id : mCameraManager.getCameraIdList()) {
                 CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(id);
                 int facing = characteristics.get(CameraCharacteristics.LENS_FACING);
                 if (type == CameraType.Front && facing == CameraCharacteristics.LENS_FACING_FRONT) {
+                    mCameraId = id;
                     return characteristics;
                 } else if (type == CameraType.Back && facing == CameraCharacteristics.LENS_FACING_BACK) {
+                    mCameraId = id;
                     return characteristics;
                 }
             }
