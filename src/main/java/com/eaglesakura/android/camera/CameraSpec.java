@@ -8,6 +8,7 @@ import com.eaglesakura.android.camera.spec.FocusMode;
 import com.eaglesakura.android.camera.spec.CaptureSize;
 import com.eaglesakura.android.camera.spec.Scene;
 import com.eaglesakura.android.camera.spec.WhiteBalance;
+import com.eaglesakura.lambda.Action1;
 import com.eaglesakura.util.CollectionUtil;
 
 import android.content.Context;
@@ -16,6 +17,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -61,6 +63,17 @@ public class CameraSpec {
 
     CameraSpec(CameraType type) {
         mType = type;
+    }
+
+    /**
+     * サイズの大きいものが若いインデックスになるように調整する
+     */
+    CameraSpec init() {
+        Collections.sort(mJpegPictureSize, (a, b) -> -Double.compare(a.getMegaPixel(), b.getMegaPixel()));
+        Collections.sort(mRawPictureSize, (a, b) -> -Double.compare(a.getMegaPixel(), b.getMegaPixel()));
+        Collections.sort(mPreviewSizes, (a, b) -> -Double.compare(a.getMegaPixel(), b.getMegaPixel()));
+
+        return this;
     }
 
     @NonNull
@@ -120,6 +133,32 @@ public class CameraSpec {
         return mPreviewSizes;
     }
 
+    /**
+     * 最低限のスペックを満たすプレビューサイズを取得する
+     */
+    @NonNull
+    public CaptureSize getPreviewSize(int requireWidth, int requireHeight) {
+        return chooseShotSize(mPreviewSizes, requireWidth, requireHeight, requireWidth, requireHeight);
+    }
+
+    /**
+     * 指定したアスペクト比で最も大きなサイズを取得する
+     */
+    @NonNull
+    public CaptureSize getJpegPictureSize(CaptureSize.Aspect aspect) {
+        for (CaptureSize size : mJpegPictureSize) {
+            if (size.getAspectType() == aspect) {
+                return size;
+            }
+        }
+
+        return mJpegPictureSize.get(0);
+    }
+
+    @NonNull
+    public CaptureSize getFullJpegPictureSize() {
+        return mJpegPictureSize.get(0);
+    }
 
     /**
      * シーンをサポートしていたらtrue
@@ -163,6 +202,43 @@ public class CameraSpec {
      */
     public boolean hasFlash() {
         return !CollectionUtil.isEmpty(mFlashModeSpecs);
+    }
+
+
+    private CaptureSize chooseShotSize(List<CaptureSize> targetSizes, int width, int height, int minWidth, int minHeight) {
+
+        final float reqLargeValue = Math.max(width, height);
+        final float reqSmallValue = Math.min(width, height);
+        final float lowerSizeLarge = Math.max(minWidth, minHeight);
+        final float lowerSizeSmall = Math.min(minWidth, minHeight);
+
+        final float TARGET_ASPECT = Math.max(1, reqLargeValue) / Math.max(1, reqSmallValue);
+
+        CaptureSize target = targetSizes.get(0);
+        try {
+            float current_diff = 999999999;
+
+            for (CaptureSize size : targetSizes) {
+                final float checkLargeValue = Math.max(size.getWidth(), size.getHeight());
+                final float checkSmallValue = Math.min(size.getWidth(), size.getHeight());
+
+                // 最低限のサイズは保つ
+                if (checkLargeValue >= lowerSizeLarge && checkSmallValue >= lowerSizeSmall) {
+                    float aspect_diff = (checkLargeValue / checkSmallValue) - TARGET_ASPECT;
+
+                    // アスペクト比の差分が小さい＝近い構成をコピーする
+                    // 基本的に奥へ行くほど解像度が低いため、最低限の要求を満たせる解像度を探す
+                    if (Math.abs(aspect_diff) <= current_diff) {
+                        target = size;
+                        current_diff = aspect_diff;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return target;
     }
 
     /**

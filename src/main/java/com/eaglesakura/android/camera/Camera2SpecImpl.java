@@ -18,6 +18,7 @@ import com.eaglesakura.util.CollectionUtil;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
@@ -29,10 +30,58 @@ import android.util.Size;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @SuppressLint("NewApi")
 public class Camera2SpecImpl {
+
+    private static final Map<CaptureFormat, Integer> sCaptureFormatMap = new HashMap<>();
+
+    private static final Map<FlashMode, Integer> sFlashModeMap = new HashMap<>();
+
+    private static final Map<FocusMode, Integer> sFocusModeMap = new HashMap<>();
+
+    private static final Map<Scene, Integer> sSceneModeMap = new HashMap<>();
+
+    private static final Map<WhiteBalance, Integer> sWhiteBalanceMap = new HashMap<>();
+
+    static {
+        sCaptureFormatMap.put(CaptureFormat.Jpeg, ImageFormat.JPEG);
+        sCaptureFormatMap.put(CaptureFormat.Raw, ImageFormat.RAW_SENSOR);
+
+        sFlashModeMap.put(FlashMode.SETTING_OFF, CameraCharacteristics.CONTROL_AE_MODE_OFF);
+        sFlashModeMap.put(FlashMode.SETTING_ON, CameraCharacteristics.CONTROL_AE_MODE_ON);
+        sFlashModeMap.put(FlashMode.SETTING_TORCH, CameraCharacteristics.CONTROL_AE_MODE_ON_ALWAYS_FLASH);
+        sFlashModeMap.put(FlashMode.SETTING_RED_EYE, CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE);
+        sFlashModeMap.put(FlashMode.SETTING_AUTO, CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH);
+
+        sFocusModeMap.put(FocusMode.SETTING_AUTO, CameraCharacteristics.CONTROL_AF_MODE_AUTO);
+        sFocusModeMap.put(FocusMode.SETTING_CONTINUOUS_PICTURE, CameraCharacteristics.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+        sFocusModeMap.put(FocusMode.SETTING_CONTINUOUS_VIDEO, CameraCharacteristics.CONTROL_AF_MODE_CONTINUOUS_VIDEO);
+        sFocusModeMap.put(FocusMode.SETTING_MACRO, CameraCharacteristics.CONTROL_AF_MODE_MACRO);
+        sFocusModeMap.put(FocusMode.SETTING_INFINITY, CameraCharacteristics.CONTROL_AF_MODE_OFF);
+
+
+        sSceneModeMap.put(Scene.SETTING_AUTO, CameraCharacteristics.CONTROL_MODE_AUTO);
+        sSceneModeMap.put(Scene.SETTING_PORTRAIT, CameraCharacteristics.CONTROL_SCENE_MODE_PORTRAIT);
+        sSceneModeMap.put(Scene.SETTING_LANDSCAPE, CameraCharacteristics.CONTROL_SCENE_MODE_LANDSCAPE);
+        sSceneModeMap.put(Scene.SETTING_NIGHT, CameraCharacteristics.CONTROL_SCENE_MODE_NIGHT);
+        sSceneModeMap.put(Scene.SETTING_NIGHT_PORTRAIT, CameraCharacteristics.CONTROL_SCENE_MODE_NIGHT_PORTRAIT);
+        sSceneModeMap.put(Scene.SETTING_BEACH, CameraCharacteristics.CONTROL_SCENE_MODE_BEACH);
+        sSceneModeMap.put(Scene.SETTING_SNOW, CameraCharacteristics.CONTROL_SCENE_MODE_SNOW);
+        sSceneModeMap.put(Scene.SETTING_SPORTS, CameraCharacteristics.CONTROL_SCENE_MODE_SPORTS);
+        sSceneModeMap.put(Scene.SETTING_PARTY, CameraCharacteristics.CONTROL_SCENE_MODE_PARTY);
+        sSceneModeMap.put(Scene.SETTING_DOCUMENT, CameraCharacteristics.CONTROL_SCENE_MODE_BARCODE);
+
+        sWhiteBalanceMap.put(WhiteBalance.SETTING_AUTO, CameraCharacteristics.CONTROL_AWB_MODE_AUTO);
+        sWhiteBalanceMap.put(WhiteBalance.SETTING_INCANDESCENT, CameraCharacteristics.CONTROL_AWB_MODE_INCANDESCENT);
+        sWhiteBalanceMap.put(WhiteBalance.SETTING_FLUORESCENT, CameraCharacteristics.CONTROL_AWB_MODE_FLUORESCENT);
+        sWhiteBalanceMap.put(WhiteBalance.SETTING_DAYLIGHT, CameraCharacteristics.CONTROL_AWB_MODE_DAYLIGHT);
+        sWhiteBalanceMap.put(WhiteBalance.SETTING_CLOUDY_DAYLIGHT, CameraCharacteristics.CONTROL_AWB_MODE_CLOUDY_DAYLIGHT);
+    }
+
 
     private Context mContext;
 
@@ -86,22 +135,9 @@ public class Camera2SpecImpl {
 
         List<FlashMode> result = new ArrayList<>();
         for (int mode : characteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES)) {
-            switch (mode) {
-                case CameraCharacteristics.CONTROL_AE_MODE_OFF:
-                    result.add(FlashMode.SETTING_OFF);
-                    break;
-                case CameraCharacteristics.CONTROL_AE_MODE_ON:
-                    result.add(FlashMode.SETTING_ON);
-                    break;
-                case CameraCharacteristics.CONTROL_AE_MODE_ON_ALWAYS_FLASH:
-                    result.add(FlashMode.SETTING_TORCH);
-                    break;
-                case CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE:
-                    result.add(FlashMode.SETTING_RED_EYE);
-                    break;
-                case CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH:
-                    result.add(FlashMode.SETTING_AUTO);
-                    break;
+            FlashMode keyFromValue = CollectionUtil.findKeyFromValue(sFlashModeMap, mode);
+            if (keyFromValue != null) {
+                result.add(keyFromValue);
             }
         }
 
@@ -113,34 +149,13 @@ public class Camera2SpecImpl {
         List<FocusMode> result = new ArrayList<>();
 
         for (int mode : characteristics.get(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES)) {
-            switch (mode) {
-                case CameraCharacteristics.CONTROL_AF_MODE_AUTO:
-                    result.add(FocusMode.SETTING_AUTO);
-                    break;
-                case CameraCharacteristics.CONTROL_AF_MODE_CONTINUOUS_PICTURE:
-                    result.add(FocusMode.SETTING_CONTINUOUS_PICTURE);
-                    break;
-                case CameraCharacteristics.CONTROL_AF_MODE_CONTINUOUS_VIDEO:
-                    result.add(FocusMode.SETTING_CONTINUOUS_VIDEO);
-                    break;
-                case CameraCharacteristics.CONTROL_AF_MODE_MACRO:
-                    result.add(FocusMode.SETTING_MACRO);
-                    break;
-                case CameraCharacteristics.CONTROL_AF_MODE_OFF:
-                    result.add(FocusMode.SETTING_INFINITY);
-                    break;
+            FocusMode value = CollectionUtil.findKeyFromValue(sFocusModeMap, mode);
+            if (value != null) {
+                result.add(value);
             }
         }
 
         return result;
-    }
-
-    static int toImageFormatInt(CaptureFormat format) {
-        if (format == CaptureFormat.Jpeg) {
-            return ImageFormat.JPEG;
-        } else {
-            return ImageFormat.RAW_SENSOR;
-        }
     }
 
     @NonNull
@@ -179,37 +194,9 @@ public class Camera2SpecImpl {
     List<Scene> getScenes(CameraCharacteristics characteristics) throws CameraException {
         List<Scene> result = new ArrayList<>();
         for (int mode : characteristics.get(CameraCharacteristics.CONTROL_AVAILABLE_SCENE_MODES)) {
-            switch (mode) {
-                case CameraCharacteristics.CONTROL_MODE_AUTO:
-                    result.add(Scene.SETTING_AUTO);
-                    break;
-                case CameraCharacteristics.CONTROL_SCENE_MODE_PORTRAIT:
-                    result.add(Scene.SETTING_PORTRAIT);
-                    break;
-                case CameraCharacteristics.CONTROL_SCENE_MODE_LANDSCAPE:
-                    result.add(Scene.SETTING_LANDSCAPE);
-                    break;
-                case CameraCharacteristics.CONTROL_SCENE_MODE_NIGHT:
-                    result.add(Scene.SETTING_NIGHT);
-                    break;
-                case CameraCharacteristics.CONTROL_SCENE_MODE_NIGHT_PORTRAIT:
-                    result.add(Scene.SETTING_NIGHT_PORTRAIT);
-                    break;
-                case CameraCharacteristics.CONTROL_SCENE_MODE_BEACH:
-                    result.add(Scene.SETTING_BEACH);
-                    break;
-                case CameraCharacteristics.CONTROL_SCENE_MODE_SNOW:
-                    result.add(Scene.SETTING_SNOW);
-                    break;
-                case CameraCharacteristics.CONTROL_SCENE_MODE_SPORTS:
-                    result.add(Scene.SETTING_SPORTS);
-                    break;
-                case CameraCharacteristics.CONTROL_SCENE_MODE_PARTY:
-                    result.add(Scene.SETTING_PARTY);
-                    break;
-                case CameraCharacteristics.CONTROL_SCENE_MODE_BARCODE:
-                    result.add(Scene.SETTING_DOCUMENT);
-                    break;
+            Scene value = CollectionUtil.findKeyFromValue(sSceneModeMap, mode);
+            if (value != null) {
+                result.add(value);
             }
         }
 
@@ -221,22 +208,9 @@ public class Camera2SpecImpl {
         List<WhiteBalance> result = new ArrayList<>();
 
         for (int mode : characteristics.get(CameraCharacteristics.CONTROL_AWB_AVAILABLE_MODES)) {
-            switch (mode) {
-                case CameraCharacteristics.CONTROL_AWB_MODE_AUTO:
-                    result.add(WhiteBalance.SETTING_AUTO);
-                    break;
-                case CameraCharacteristics.CONTROL_AWB_MODE_INCANDESCENT:
-                    result.add(WhiteBalance.SETTING_INCANDESCENT);
-                    break;
-                case CameraCharacteristics.CONTROL_AWB_MODE_FLUORESCENT:
-                    result.add(WhiteBalance.SETTING_FLUORESCENT);
-                    break;
-                case CameraCharacteristics.CONTROL_AWB_MODE_DAYLIGHT:
-                    result.add(WhiteBalance.SETTING_DAYLIGHT);
-                    break;
-                case CameraCharacteristics.CONTROL_AWB_MODE_CLOUDY_DAYLIGHT:
-                    result.add(WhiteBalance.SETTING_CLOUDY_DAYLIGHT);
-                    break;
+            WhiteBalance value = CollectionUtil.findKeyFromValue(sWhiteBalanceMap, mode);
+            if (value != null) {
+                result.add(value);
             }
         }
 
@@ -257,6 +231,27 @@ public class Camera2SpecImpl {
         result.mSceneSpecs = impl.getScenes(spec);
         result.mWhiteBalanceSpecs = impl.getWhiteBalances(spec);
 
-        return result;
+        return result.init();
     }
+
+    static int toSceneInt(Scene scene) {
+        return sSceneModeMap.get(scene);
+    }
+
+    static int toAeModeInt(FocusMode mode) {
+        return sFocusModeMap.get(mode);
+    }
+
+    static int toAwbInt(WhiteBalance mode) {
+        return sWhiteBalanceMap.get(mode);
+    }
+
+    static int toFlashModeInt(FlashMode mode) {
+        return sFlashModeMap.get(mode);
+    }
+
+    static int toImageFormatInt(CaptureFormat format) {
+        return sCaptureFormatMap.get(format);
+    }
+
 }

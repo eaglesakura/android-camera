@@ -1,29 +1,25 @@
 package com.eaglesakura.android.camera;
 
-import com.eaglesakura.android.camera.CameraManager;
-import com.eaglesakura.android.camera.CameraRequest;
 import com.eaglesakura.android.camera.error.CameraAccessFailedException;
 import com.eaglesakura.android.camera.error.CameraException;
 import com.eaglesakura.android.camera.error.CameraSecurityException;
 import com.eaglesakura.android.camera.log.CameraLog;
+import com.eaglesakura.android.camera.spec.FocusMode;
 import com.eaglesakura.android.thread.ui.UIHandler;
 import com.eaglesakura.android.util.AndroidThreadUtil;
-import com.eaglesakura.android.util.AndroidUtil;
-import com.eaglesakura.lambda.CancelCallback;
 import com.eaglesakura.thread.Holder;
 import com.eaglesakura.util.Util;
 
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CaptureRequest;
 import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.view.Surface;
 
 import java.util.Arrays;
@@ -38,7 +34,7 @@ class Camera2ManagerImpl extends CameraManager {
 
     private CameraCaptureSession mPreviewSession;
 
-    Camera2ManagerImpl(Context context, CameraRequest request) throws CameraException {
+    Camera2ManagerImpl(Context context, CameraConnectRequest request) throws CameraException {
         super(context, request);
         mSpec = new Camera2SpecImpl(context);
         mCharacteristics = mSpec.getCameraSpec(request.getCameraType());
@@ -114,8 +110,38 @@ class Camera2ManagerImpl extends CameraManager {
         }
     }
 
+    private CaptureRequest.Builder newCaptureRequest(CameraEnvironmentRequest env, int template) throws CameraAccessException {
+        CaptureRequest.Builder request = mCamera.createCaptureRequest(template);
+        if (env != null) {
+            if (env.getFlashMode() != null) {
+                request.set(CaptureRequest.FLASH_MODE, Camera2SpecImpl.toFlashModeInt(env.getFlashMode()));
+            }
+
+            if (env.getFocusMode() != null) {
+                FocusMode mode = env.getFocusMode();
+                if (mode == FocusMode.SETTING_INFINITY) {
+                    // https://developer.android.com/reference/android/hardware/camera2/CameraCharacteristics.html
+                    // LEGACY devices will support OFF mode only if they support focusing to infinity (by also setting android.lens.focusDistance to 0.0f).
+                    request.set(CaptureRequest.LENS_FOCUS_DISTANCE, 0.0f);
+                }
+
+                request.set(CaptureRequest.CONTROL_AE_MODE, Camera2SpecImpl.toAeModeInt(mode));
+            }
+
+            if (env.getScene() != null) {
+                request.set(CaptureRequest.CONTROL_SCENE_MODE, Camera2SpecImpl.toSceneInt(env.getScene()));
+            }
+
+            if (env.getWhiteBalance() != null) {
+                request.set(CaptureRequest.CONTROL_AWB_MODE, Camera2SpecImpl.toAwbInt(env.getWhiteBalance()));
+            }
+        }
+
+        return request;
+    }
+
     @Override
-    public void startPreview(Surface surface) throws CameraException {
+    public void startPreview(@NonNull Surface surface, @NonNull CameraPreviewRequest previewRequest, @Nullable CameraEnvironmentRequest env) throws CameraException {
         AndroidThreadUtil.assertBackgroundThread();
 
         try {
@@ -126,10 +152,12 @@ class Camera2ManagerImpl extends CameraManager {
                 @Override
                 public void onConfigured(CameraCaptureSession session) {
                     try {
-                        CaptureRequest.Builder builder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+                        CaptureRequest.Builder builder = newCaptureRequest(env, CameraDevice.TEMPLATE_PREVIEW);
                         builder.addTarget(surface);
+                        session.stopRepeating();
                         session.setRepeatingRequest(builder.build(), null, null);
                     } catch (CameraAccessException e) {
+                        errorHolder.set(new CameraException("CaptureRequest build failed"));
                         throw new IllegalStateException(e);
                     }
 

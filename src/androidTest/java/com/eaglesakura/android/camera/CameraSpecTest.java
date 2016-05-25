@@ -2,7 +2,9 @@ package com.eaglesakura.android.camera;
 
 import com.eaglesakura.android.camera.log.CameraLog;
 import com.eaglesakura.android.camera.spec.CameraType;
+import com.eaglesakura.android.camera.spec.CaptureSize;
 import com.eaglesakura.android.devicetest.DeviceTestCase;
+import com.eaglesakura.util.StringUtil;
 
 import org.junit.Test;
 
@@ -24,6 +26,12 @@ public class CameraSpecTest extends DeviceTestCase {
             assertNotNull(specs.getRawPictureSize());
             assertNotNull(specs.getPreviewSizes());
             assertNotNull(specs.getWhiteBalanceSpecs());
+
+            CaptureSize size = specs.getPreviewSize(796, 597);
+            CameraLog.hardware("PreviewSize %dx%d", size.getWidth(), size.getHeight());
+            assertThat(StringUtil.format("%d < 1280", size.getWidth()), size.getWidth() < 1280, isTrue());
+            assertThat(StringUtil.format("%d < 1280", size.getHeight()), size.getHeight() < 1280, isTrue());
         }
     }
+
 }

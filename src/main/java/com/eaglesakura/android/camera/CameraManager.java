@@ -1,18 +1,18 @@
 package com.eaglesakura.android.camera;
 
 import com.eaglesakura.android.camera.error.CameraException;
-import com.eaglesakura.lambda.CancelCallback;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.Surface;
 
 public abstract class CameraManager {
     protected final Context mContext;
 
-    protected final CameraRequest mRequest;
+    protected final CameraConnectRequest mRequest;
 
-    public CameraManager(Context context, CameraRequest request) {
+    public CameraManager(Context context, CameraConnectRequest request) {
         mContext = context.getApplicationContext();
         mRequest = request;
     }
@@ -26,7 +26,7 @@ public abstract class CameraManager {
     /**
      * カメラプレビューを開始する
      */
-    public abstract void startPreview(Surface surface) throws CameraException;
+    public abstract void startPreview(@NonNull Surface surface, @NonNull CameraPreviewRequest preview, @Nullable CameraEnvironmentRequest env) throws CameraException;
 
     /**
      * カメラプレビューを停止する

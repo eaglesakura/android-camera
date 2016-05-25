@@ -2,17 +2,15 @@ package com.eaglesakura.android.camera.spec;
 
 import com.eaglesakura.math.Vector2;
 
-import android.hardware.Camera;
-
 /**
  * 撮影・プレビュー用のサイズを返す
  */
 public class CaptureSize {
     private final Vector2 mSize;
 
-    private final AspectID mAspectID;
+    private final Aspect mAspectID;
 
-    private enum AspectID {
+    public enum Aspect {
         /**
          * 縦横1:1
          */
@@ -102,12 +100,12 @@ public class CaptureSize {
         /**
          * 最も近いアスペクト比を取得する
          */
-        public static AspectID getNearAspect(double aspect) {
+        static Aspect getNearAspect(double aspect) {
             double diffNear = 99999999;
-            AspectID result = null;
+            Aspect result = null;
 
-            AspectID[] values = values();
-            for (AspectID value : values) {
+            Aspect[] values = values();
+            for (Aspect value : values) {
                 final double checkDiff = Math.abs(value.aspect() - aspect);
                 if (checkDiff < diffNear) {
                     // 差が小さいならコレにする
@@ -122,7 +120,7 @@ public class CaptureSize {
 
     public CaptureSize(int width, int height) {
         this.mSize = new Vector2(width, height);
-        this.mAspectID = AspectID.getNearAspect(getAspect());
+        this.mAspectID = Aspect.getNearAspect(getAspect());
     }
 
     /**
@@ -163,6 +161,13 @@ public class CaptureSize {
      */
     public String getAspectText() {
         return mAspectID.aspectText();
+    }
+
+    /**
+     * アスペクト比のIDを取得する
+     */
+    public Aspect getAspectType() {
+        return mAspectID;
     }
 
     /**
