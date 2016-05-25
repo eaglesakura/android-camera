@@ -29,7 +29,7 @@ public class Camera2ManagerImplTest extends DeviceTestCase {
     public void カメラプレビューを行う() throws Throwable {
         CameraSpec spec = CameraSpec.getSpecs(getContext(), CameraType.Back);
         CameraConnectRequest connectRequest = new CameraConnectRequest(spec.getType());
-        CameraEnvironmentRequest envRequest = new CameraEnvironmentRequest().whiteBalance(WhiteBalance.SETTING_AUTO).flash(FlashMode.SETTING_AUTO);
+        CameraEnvironmentRequest envRequest = new CameraEnvironmentRequest().whiteBalance(WhiteBalance.SETTING_AUTO).flash(FlashMode.SETTING_OFF);
         CameraPreviewRequest previewRequest = new CameraPreviewRequest().size(spec.getPreviewSize(640, 480));
 
         CameraManager cameraManager = new Camera2ManagerImpl(getContext(), connectRequest);
@@ -61,7 +61,7 @@ public class Camera2ManagerImplTest extends DeviceTestCase {
 
     @Test
     public void 撮影を行う() throws Throwable {
-        CameraSpec spec = CameraSpec.getSpecs(getContext(), CameraType.Back);
+        CameraSpec spec = CameraSpec.getSpecs(getContext(), CameraType.Front);
         CameraPreviewRequest previewRequest = new CameraPreviewRequest().size(spec.getPreviewSize(640, 480));
         CameraConnectRequest connectRequest = new CameraConnectRequest(spec.getType());
         CameraEnvironmentRequest envRequest = new CameraEnvironmentRequest().flash(FlashMode.SETTING_OFF);

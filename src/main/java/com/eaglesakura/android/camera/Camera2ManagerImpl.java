@@ -137,7 +137,12 @@ class Camera2ManagerImpl extends CameraManager {
     private int getJpegOrientation() {
         int sensorOrientation = mCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
         int deviceRotateDegree = ContextUtil.getDeviceRotateDegree(mContext);
-        deviceRotateDegree = (360 - sensorOrientation + deviceRotateDegree) % 360;
+
+        if (mRequest.getCameraType() == CameraType.Back) {
+            deviceRotateDegree = (360 - sensorOrientation + deviceRotateDegree) % 360;
+        } else {
+            deviceRotateDegree = (sensorOrientation + deviceRotateDegree + 360) % 360;
+        }
         return deviceRotateDegree;
     }
 
