@@ -24,6 +24,11 @@ public abstract class CameraManager {
     public abstract void disconnect();
 
     /**
+     * 環境設定をリクエストする
+     */
+    public abstract void request(CameraEnvironmentRequest env) throws CameraException;
+
+    /**
      * カメラプレビューを開始する
      */
     public abstract void startPreview(@NonNull Surface surface, @NonNull CameraPreviewRequest preview, @Nullable CameraEnvironmentRequest env) throws CameraException;
@@ -32,4 +37,9 @@ public abstract class CameraManager {
      * カメラプレビューを停止する
      */
     public abstract void stopPreview() throws CameraException;
+
+    /**
+     * 写真撮影を行わせる
+     */
+    public abstract PictureData takePicture(@NonNull CameraPictureShotRequest request, @Nullable CameraEnvironmentRequest env) throws CameraException;
 }

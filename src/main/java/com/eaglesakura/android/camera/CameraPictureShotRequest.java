@@ -1,6 +1,7 @@
 package com.eaglesakura.android.camera;
 
 import com.eaglesakura.android.camera.spec.CaptureFormat;
+import com.eaglesakura.android.camera.spec.CaptureSize;
 import com.eaglesakura.android.camera.spec.FlashMode;
 
 import android.support.annotation.FloatRange;
@@ -9,22 +10,22 @@ import android.support.annotation.Nullable;
 
 public final class CameraPictureShotRequest {
 
-    double mLatitude;
+    private double mLatitude;
 
-    double mLongitude;
+    private double mLongitude;
 
     @NonNull
-    CaptureFormat mCaptureFormat = CaptureFormat.Jpeg;
+    private CaptureFormat mCaptureFormat = CaptureFormat.Jpeg;
 
-    @Nullable
-    FlashMode mFlashMode;
+    private final CaptureSize mCaptureSize;
 
-    public CameraPictureShotRequest() {
+    public CameraPictureShotRequest(@NonNull CaptureSize size) {
+        mCaptureSize = size;
     }
 
     public CameraPictureShotRequest location(double lat, double lng) {
         mLatitude = lat;
-        mLongitude = lat;
+        mLongitude = lng;
         return this;
     }
 
@@ -42,14 +43,14 @@ public final class CameraPictureShotRequest {
         return mLatitude != 0 && mLongitude != 0;
     }
 
-    public CameraPictureShotRequest flash(FlashMode flashMode) {
-        mFlashMode = flashMode;
-        return this;
-    }
 
     public CameraPictureShotRequest captureFormat(CaptureFormat fmt) {
         mCaptureFormat = fmt;
         return this;
+    }
+
+    public CaptureSize getCaptureSize() {
+        return mCaptureSize;
     }
 
     @NonNull

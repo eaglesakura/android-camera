@@ -22,8 +22,8 @@ public class CameraSpecTest extends DeviceTestCase {
 
             assertNotNull(specs.getFlashModeSpecs());
             assertNotNull(specs.getFocusModeSpecs());
-            assertNotNull(specs.getJpegPictureSize());
-            assertNotNull(specs.getRawPictureSize());
+            assertNotNull(specs.getJpegPictureSizes());
+            assertNotNull(specs.getRawPictureSizes());
             assertNotNull(specs.getPreviewSizes());
             assertNotNull(specs.getWhiteBalanceSpecs());
 

@@ -39,6 +39,11 @@ public final class CameraEnvironmentRequest {
         return this;
     }
 
+    public CameraEnvironmentRequest flash(FlashMode flashMode) {
+        mFlashMode = flashMode;
+        return this;
+    }
+
     @Nullable
     public FlashMode getFlashMode() {
         return mFlashMode;

@@ -178,12 +178,12 @@ public class CameraSpec {
     }
 
     @NonNull
-    public List<CaptureSize> getJpegPictureSize() {
+    public List<CaptureSize> getJpegPictureSizes() {
         return mJpegPictureSize;
     }
 
     @NonNull
-    public List<CaptureSize> getRawPictureSize() {
+    public List<CaptureSize> getRawPictureSizes() {
         return mRawPictureSize;
     }
 
