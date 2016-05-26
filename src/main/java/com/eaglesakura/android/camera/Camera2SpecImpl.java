@@ -162,7 +162,7 @@ public class Camera2SpecImpl {
     List<CaptureSize> getPictureSizes(CameraCharacteristics characteristics, CaptureFormat format) throws CameraException {
         Size[] sizes = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(toImageFormatInt(format));
         if (CollectionUtil.isEmpty(sizes)) {
-            throw new CameraSpecNotFoundException("Format Error :: " + format);
+            return new ArrayList<>();
         }
         List<CaptureSize> result = new ArrayList<>();
         for (Size size : sizes) {
@@ -219,7 +219,6 @@ public class Camera2SpecImpl {
 
     static CameraSpec getSpecs(Context context, CameraType type) throws CameraException {
         CameraSpec result = new CameraSpec(type);
-
         Camera2SpecImpl impl = new Camera2SpecImpl(context);
         CameraCharacteristics spec = impl.getCameraSpec(type);
 

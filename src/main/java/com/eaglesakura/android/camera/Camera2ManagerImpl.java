@@ -226,7 +226,6 @@ class Camera2ManagerImpl extends CameraManager {
 
     @Override
     public void startPreview(@NonNull Surface surface, @NonNull CameraPreviewRequest previewRequest, @Nullable CameraEnvironmentRequest env) throws CameraException {
-        AndroidThreadUtil.assertBackgroundThread();
         try {
 
             // セッションを生成する
