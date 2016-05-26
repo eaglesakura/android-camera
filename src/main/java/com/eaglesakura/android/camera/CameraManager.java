@@ -20,6 +20,11 @@ public abstract class CameraManager {
         mRequest = request;
     }
 
+    /**
+     * プレビュー用のSurfaceを取得する
+     */
+    public abstract Surface getPreviewSurface();
+
     public abstract boolean connect() throws CameraException;
 
     public abstract boolean isConnected();

@@ -8,7 +8,6 @@ import com.eaglesakura.android.camera.log.CameraLog;
 import com.eaglesakura.android.camera.spec.CameraType;
 import com.eaglesakura.android.camera.spec.FocusMode;
 import com.eaglesakura.android.thread.async.AsyncHandler;
-import com.eaglesakura.android.thread.ui.UIHandler;
 import com.eaglesakura.android.util.AndroidThreadUtil;
 import com.eaglesakura.android.util.ContextUtil;
 import com.eaglesakura.thread.Holder;
@@ -30,9 +29,7 @@ import android.media.ImageReader;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.view.Display;
 import android.view.Surface;
-import android.view.WindowManager;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -63,6 +60,11 @@ class Camera2ManagerImpl extends CameraManager {
     }
 
     @Override
+    public Surface getPreviewSurface() {
+        return mPreviewSurface;
+    }
+
+    @Override
     public boolean connect() throws CameraException {
         AndroidThreadUtil.assertBackgroundThread();
 
@@ -78,14 +80,18 @@ class Camera2ManagerImpl extends CameraManager {
 
                 @Override
                 public void onDisconnected(CameraDevice camera) {
+                    CameraLog.hardware("onDisconnected[%s]", camera.getId());
+                    camera.close();
                     mCamera = null;
                 }
 
                 @Override
                 public void onError(CameraDevice camera, int error) {
                     errorHolder.set(new CameraSecurityException("Error :: " + error));
+                    camera.close();
+                    mCamera = null;
                 }
-            }, UIHandler.getInstance());
+            }, sControlHandler);
 
             // データ待ちを行う
             while (errorHolder.get() == null && cameraDeviceHolder.get() == null) {
@@ -255,11 +261,15 @@ class Camera2ManagerImpl extends CameraManager {
 
             try {
                 mPreviewSession.stopRepeating();
-                mPreviewSession.close();
-                mPreviewSession = null;
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            try {
+                mPreviewSession.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            mPreviewSession = null;
         }
     }
 
