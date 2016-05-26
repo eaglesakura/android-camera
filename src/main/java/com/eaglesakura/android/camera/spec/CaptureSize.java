@@ -2,6 +2,8 @@ package com.eaglesakura.android.camera.spec;
 
 import com.eaglesakura.math.Vector2;
 
+import android.content.Context;
+
 /**
  * 撮影・プレビュー用のサイズを返す
  */
@@ -180,12 +182,17 @@ public class CaptureSize {
     /**
      * CaptureSizeの縦横比を満たし、かつminWidth/minHeight以上の大きさを返却する
      *
-     * @param minWidth  最小限の幅
-     * @param minHeight 最小限の高さ
+     * @param fripOrientation 縦横サイズを入れ替えている場合はtrue
+     * @param minWidth        最小限の幅
+     * @param minHeight       最小限の高さ
      * @return 新しい縦横サイズ
      */
-    public Vector2 getViewSize(int minWidth, int minHeight) {
+    public Vector2 getViewSize(boolean fripOrientation, int minWidth, int minHeight) {
+
         float aspect = (float) getAspect();
+        if (fripOrientation) {
+            aspect = (float) getHeight() / (float) getWidth();
+        }
         Vector2 result = new Vector2(minWidth, minHeight);
         result.x = minHeight * aspect;
         if ((int) result.x < minWidth) {
