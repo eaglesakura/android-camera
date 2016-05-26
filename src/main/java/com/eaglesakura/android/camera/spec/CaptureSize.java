@@ -171,10 +171,28 @@ public class CaptureSize {
     }
 
     /**
-     * アスペクト比を取得する
+     * アスペクト比(width / height)を取得する
      */
     public double getAspect() {
         return (double) getWidth() / (double) getHeight();
+    }
+
+    /**
+     * CaptureSizeの縦横比を満たし、かつminWidth/minHeight以上の大きさを返却する
+     *
+     * @param minWidth  最小限の幅
+     * @param minHeight 最小限の高さ
+     * @return 新しい縦横サイズ
+     */
+    public Vector2 getViewSize(int minWidth, int minHeight) {
+        float aspect = (float) getAspect();
+        Vector2 result = new Vector2(minWidth, minHeight);
+        result.x = minHeight * aspect;
+        if ((int) result.x < minWidth) {
+            result.x = minWidth;
+            result.y = minWidth / aspect;
+        }
+        return result;
     }
 
     /**

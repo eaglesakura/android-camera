@@ -1,21 +1,22 @@
 package com.eaglesakura.android.camera;
 
 import com.eaglesakura.android.camera.error.CameraException;
-import com.eaglesakura.android.camera.spec.CameraType;
+import com.eaglesakura.android.thread.async.AsyncHandler;
 
 import android.content.Context;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.annotation.UiThread;
 import android.view.Surface;
 
-public abstract class CameraManager {
+public abstract class CameraControlManager {
     protected final Context mContext;
 
     protected final CameraConnectRequest mRequest;
 
-    public CameraManager(Context context, CameraConnectRequest request) {
+    protected final static AsyncHandler sTaskQueue = AsyncHandler.createInstance("camera-ctrl-mgr");
+
+    public CameraControlManager(Context context, CameraConnectRequest request) {
         mContext = context.getApplicationContext();
         mRequest = request;
     }
@@ -56,7 +57,7 @@ public abstract class CameraManager {
     @NonNull
     public abstract PictureData takePicture(@NonNull CameraPictureShotRequest request, @Nullable CameraEnvironmentRequest env) throws CameraException;
 
-    public static CameraManager newInstance(Context context, CameraConnectRequest request) throws CameraException {
+    public static CameraControlManager newInstance(Context context, CameraConnectRequest request) throws CameraException {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             // Camera2
             return new Camera2ManagerImpl(context, request);

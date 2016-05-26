@@ -9,6 +9,7 @@ import com.eaglesakura.android.camera.spec.CaptureSize;
 import com.eaglesakura.android.camera.spec.Scene;
 import com.eaglesakura.android.camera.spec.WhiteBalance;
 import com.eaglesakura.lambda.Action1;
+import com.eaglesakura.math.Vector2;
 import com.eaglesakura.util.CollectionUtil;
 
 import android.content.Context;
@@ -124,6 +125,24 @@ public class CameraSpec {
 //        mFocusModeSpecs = FocusMode.list(parameters.getSupportedFocusModes()); // フォーカス設定
 //        mFlashModeSpecs = FlashMode.list(parameters.getSupportedFlashModes()); // フラッシュモード一覧
 //    }
+
+    /**
+     * CaptureSizeの縦横比を満たし、かつminWidth/minHeight以上の大きさを返却する
+     *
+     * @param minWidth  最小限の幅
+     * @param minHeight 最小限の高さ
+     * @param size      計算するアスペクト比
+     * @return 新しい縦横サイズ
+     */
+    public Vector2 getViewSize(int minWidth, int minHeight, CaptureSize size) {
+        Vector2 result = new Vector2(minWidth, minHeight);
+        result.x = (float) (minHeight * size.getAspect());
+        if ((int) result.x < minWidth) {
+            result.x = minWidth;
+            result.y = (float) (minWidth / size.getAspect());
+        }
+        return result;
+    }
 
     /**
      * プレビューサイズ一覧を取得
