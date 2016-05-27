@@ -52,10 +52,11 @@ class Camera2ManagerImpl extends CameraControlManager {
 
     private Surface mPreviewSurface;
 
-    private static AsyncHandler sControlHandler = AsyncHandler.createInstance("camera-ctrl");
+    private AsyncHandler mControlHandler;
 
-    private static AsyncHandler sProcessingHandler = sControlHandler;
+    private AsyncHandler mProcessingHandler;
 
+    private AsyncHandler mTaskQueue;
 
     Camera2ManagerImpl(Context context, CameraConnectRequest request) throws CameraException {
         super(context, request);
@@ -71,6 +72,10 @@ class Camera2ManagerImpl extends CameraControlManager {
     @Override
     public boolean connect() throws CameraException {
         AndroidThreadUtil.assertBackgroundThread();
+
+        mControlHandler = AsyncHandler.createInstance("camera-control");
+        mProcessingHandler = AsyncHandler.createInstance("camera-processing");
+        mTaskQueue = AsyncHandler.createInstance("camera-queue");
 
         ThrowableRunner<CameraDevice, CameraException> runner = new ThrowableRunner<>(() -> {
             Holder<CameraException> errorHolder = new Holder<>();
@@ -96,7 +101,7 @@ class Camera2ManagerImpl extends CameraControlManager {
                         camera.close();
                         mCamera = null;
                     }
-                }, sControlHandler);
+                }, mControlHandler);
 
                 // データ待ちを行う
                 while (errorHolder.get() == null && cameraDeviceHolder.get() == null) {
@@ -114,7 +119,7 @@ class Camera2ManagerImpl extends CameraControlManager {
                 throw new CameraSecurityException(e);
             }
         });
-        sTaskQueue.post(runner);
+        mTaskQueue.post(runner);
         mCamera = runner.await();
         return true;
     }
@@ -149,8 +154,17 @@ class Camera2ManagerImpl extends CameraControlManager {
             return this;
         });
 
-        sTaskQueue.post(runner);
+        mTaskQueue.post(runner);
         runner.await();
+
+        // ハンドラを廃棄する
+        mControlHandler.dispose();
+        mProcessingHandler.dispose();
+        mTaskQueue.dispose();
+
+        mControlHandler = null;
+        mProcessingHandler = null;
+        mTaskQueue = null;
     }
 
     private int getJpegOrientation() {
@@ -230,7 +244,7 @@ class Camera2ManagerImpl extends CameraControlManager {
                 public void onConfigureFailed(CameraCaptureSession session) {
                     errorHolder.set(new CameraException("Session create failed"));
                 }
-            }, sControlHandler);
+            }, mControlHandler);
         } catch (CameraAccessException e) {
             throw new CameraAccessFailedException(e);
         }
@@ -276,7 +290,7 @@ class Camera2ManagerImpl extends CameraControlManager {
             return this;
         });
 
-        sTaskQueue.post(runner);
+        mTaskQueue.post(runner);
         runner.await();
     }
 
@@ -308,7 +322,7 @@ class Camera2ManagerImpl extends CameraControlManager {
             return this;
         });
 
-        sTaskQueue.post(runner);
+        mTaskQueue.post(runner);
         runner.await();
     }
 
@@ -335,7 +349,7 @@ class Camera2ManagerImpl extends CameraControlManager {
             public void onCaptureFailed(CameraCaptureSession session, CaptureRequest request, CaptureFailure failure) {
                 errorHolder.set(new PictureFailedException("PreCapture Failed"));
             }
-        }, sControlHandler);
+        }, mControlHandler);
 
         while (errorHolder.get() == null && completedHolder.get() == null) {
             Util.sleep(1);
@@ -394,7 +408,7 @@ class Camera2ManagerImpl extends CameraControlManager {
                 resultHolder.set(new PictureData(image.getWidth(), image.getHeight(), onMemoryFile));
 
                 image.close();
-            }, sProcessingHandler);
+            }, mProcessingHandler);
 
             CaptureRequest.Builder builder = newCaptureRequest(env, CameraDevice.TEMPLATE_STILL_CAPTURE);
             builder.set(CaptureRequest.JPEG_ORIENTATION, getJpegOrientation());
@@ -408,7 +422,7 @@ class Camera2ManagerImpl extends CameraControlManager {
             }
 
             builder.addTarget(imageReader.getSurface());
-            pictureSession.capture(builder.build(), captureCallback, sControlHandler);
+            pictureSession.capture(builder.build(), captureCallback, mControlHandler);
 
             while (errorHolder.get() == null && resultHolder.get() == null) {
                 Util.sleep(1);
@@ -441,7 +455,7 @@ class Camera2ManagerImpl extends CameraControlManager {
         ThrowableRunner<PictureData, CameraException> runner = new ThrowableRunner<>(() -> {
             return takePictureImpl(request, env);
         });
-        sTaskQueue.post(runner);
+        mTaskQueue.post(runner);
         return runner.await();
     }
 }

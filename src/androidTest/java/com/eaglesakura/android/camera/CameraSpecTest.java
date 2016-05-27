@@ -29,8 +29,8 @@ public class CameraSpecTest extends DeviceTestCase {
 
             CaptureSize size = specs.getPreviewSize(796, 597);
             CameraLog.hardware("PreviewSize %dx%d", size.getWidth(), size.getHeight());
-            assertThat(StringUtil.format("%d < 1280", size.getWidth()), size.getWidth() < 1280, isTrue());
-            assertThat(StringUtil.format("%d < 1280", size.getHeight()), size.getHeight() < 1280, isTrue());
+            assertThat(StringUtil.format("%d < 1400", size.getWidth()), size.getWidth() < 1400, isTrue());
+            assertThat(StringUtil.format("%d < 1400", size.getHeight()), size.getHeight() < 1400, isTrue());
         }
     }
 
