@@ -14,8 +14,6 @@ public abstract class CameraControlManager {
 
     protected final CameraConnectRequest mRequest;
 
-    protected final static AsyncHandler sTaskQueue = AsyncHandler.createInstance("camera-ctrl-mgr");
-
     public CameraControlManager(Context context, CameraConnectRequest request) {
         mContext = context.getApplicationContext();
         mRequest = request;

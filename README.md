@@ -1,1 +1,1 @@
-# Android Camera Librarys
+# Android Camera Library
