@@ -180,6 +180,14 @@ public class CameraSpec {
     }
 
     /**
+     * 最低限のスペックを満たす撮影サイズを取得する
+     */
+    @NonNull
+    public CaptureSize getJpegPictureSize(int requireWidth, int requireHeight) {
+        return chooseShotSize(mJpegPictureSize, requireWidth, requireHeight, requireWidth, requireHeight);
+    }
+
+    /**
      * シーンをサポートしていたらtrue
      */
     public boolean isSupportedScene(Scene scene) {
