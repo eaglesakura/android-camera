@@ -174,6 +174,10 @@ class Camera2ManagerImpl extends CameraControlManager {
         });
     }
 
+    @Override
+    public boolean isPreviewNow() {
+        return (mFlags & FLAG_NOW_PREVIEW) != 0;
+    }
 
     @Override
     public boolean isConnected() {
@@ -363,6 +367,7 @@ class Camera2ManagerImpl extends CameraControlManager {
 
         Holder<CameraException> errorHolder = new Holder<>();
         Holder<Boolean> completedHolder = new Holder<>();
+        session.stopRepeating();
         session.capture(builder.build(), new CameraCaptureSession.CaptureCallback() {
             @Override
             public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
@@ -389,11 +394,13 @@ class Camera2ManagerImpl extends CameraControlManager {
     }
 
     PictureData takePictureImpl(@Nullable CameraEnvironmentRequest env) throws CameraException {
+        if (!isPreviewNow()) {
+            throw new IllegalStateException("Preview not started");
+        }
 
-        CameraCaptureSession pictureSession = getSession();
+        CameraCaptureSession session = getSession();
         try {
-            pictureSession.stopRepeating();
-            startPreCapture(pictureSession, mImageReader.getSurface(), env);
+            startPreCapture(session, mPreviewSurface.getNativeSurface(mPreviewRequest.getPreviewSize()), env);
 
             Holder<CameraException> errorHolder = new Holder<>();
             Holder<PictureData> resultHolder = new Holder<>();
@@ -436,7 +443,8 @@ class Camera2ManagerImpl extends CameraControlManager {
             }
 
             builder.addTarget(mImageReader.getSurface());
-            pictureSession.capture(builder.build(), captureCallback, mControlHandler);
+            session.stopRepeating();
+            session.capture(builder.build(), captureCallback, mControlHandler);
 
             while (errorHolder.get() == null && resultHolder.get() == null) {
                 Util.sleep(1);

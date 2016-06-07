@@ -15,17 +15,12 @@ import android.view.Surface;
  *
  * 内部はAndroid 5.0以上であればCamera2 APIを、それ以外であればCamera1 APIを使用する
  *
- * プレビューから撮影をする場合
- *  - 1. connect
- *  - 2. startPreview
- *  - 3. takePicture
- *  - 4. stopPreview
- *  - 5. disconnect
- *
- * 撮影のみを行う場合
- *  - 1. connect
- *  - 2. takePicture
- *  - 3. disconnect
+ * 互換性を保つため、撮影は必ずconnect > preview > takePicture の順で行わなければならない。
+ * - 1. connect
+ * - 2. startPreview
+ * - 3. takePicture
+ * - 4. stopPreview
+ * - 5. disconnect
  */
 public abstract class CameraControlManager {
     protected final Context mContext;
@@ -45,6 +40,11 @@ public abstract class CameraControlManager {
      * @param shotRequest    撮影設定
      */
     public abstract boolean connect(@Nullable CameraSurface previewSurface, @Nullable CameraPreviewRequest previewRequest, @Nullable CameraPictureShotRequest shotRequest) throws CameraException;
+
+    /**
+     * プレビュー中であればtrue
+     */
+    public abstract boolean isPreviewNow();
 
     public abstract boolean isConnected();
 
