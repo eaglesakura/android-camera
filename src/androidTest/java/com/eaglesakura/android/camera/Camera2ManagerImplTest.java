@@ -35,7 +35,7 @@ public class Camera2ManagerImplTest extends DeviceTestCase {
 
         cameraManager.connect();
 
-        OffscreenPreviewSurface previewSurface = new OffscreenPreviewSurface(getContext(), previewRequest.getPreviewSize());
+        OffscreenPreviewSurface previewSurface = new OffscreenPreviewSurface(getContext(), spec.getMinimumPreviewSize());
         try {
             SurfaceTexture surface = previewSurface.createSurface();
             cameraManager.startPreview(new Surface(surface), previewRequest, envRequest);
@@ -62,10 +62,7 @@ public class Camera2ManagerImplTest extends DeviceTestCase {
     public void 撮影を行う() throws Throwable {
         CameraSpec spec = CameraSpec.getSpecs(getContext(), CameraType.Front);
 
-        CaptureSize previewSize = spec.getPreviewSize(640, 480);
-        assertNotNull(previewSize);
-
-        CameraPreviewRequest previewRequest = new CameraPreviewRequest().size(previewSize);
+        CameraPreviewRequest previewRequest = new CameraPreviewRequest().size(spec.getPreviewSize(640, 480));
         CameraConnectRequest connectRequest = new CameraConnectRequest(spec.getType());
         CameraEnvironmentRequest envRequest = new CameraEnvironmentRequest().flash(FlashMode.SETTING_OFF);
         CameraPictureShotRequest shotRequest =
@@ -76,7 +73,7 @@ public class Camera2ManagerImplTest extends DeviceTestCase {
 
         cameraManager.connect();
 
-        OffscreenPreviewSurface previewSurface = new OffscreenPreviewSurface(getContext(), previewRequest.getPreviewSize());
+        OffscreenPreviewSurface previewSurface = new OffscreenPreviewSurface(getContext(), spec.getMinimumPreviewSize());
         try {
             SurfaceTexture surface = previewSurface.createSurface();
             cameraManager.startPreview(new Surface(surface), previewRequest, envRequest);

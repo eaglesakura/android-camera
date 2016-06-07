@@ -161,6 +161,14 @@ public class CameraSpec {
     }
 
     /**
+     * サポートしているプレビューサイズのうち、最も小さいサイズを返却する
+     */
+    @NonNull
+    public CaptureSize getMinimumPreviewSize() {
+        return mPreviewSizes.get(mPreviewSizes.size() - 1);
+    }
+
+    /**
      * 指定したアスペクト比で最も大きなサイズを取得する
      */
     @NonNull
