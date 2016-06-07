@@ -13,6 +13,7 @@ import com.eaglesakura.util.Timer;
 import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -30,8 +31,6 @@ class CameraLegacyManagerImpl extends CameraControlManager {
     Camera.Parameters mParameters;
 
     Camera.CameraInfo mCameraInfo = new Camera.CameraInfo();
-
-    AsyncHandler mTaskQueue;
 
     /**
      * プレビュー中である場合true
@@ -53,8 +52,6 @@ class CameraLegacyManagerImpl extends CameraControlManager {
             mPreviewRequest = previewRequest;
             mPreviewSurface = previewSurface;
             mPictureShotRequest = shotRequest;
-
-            mTaskQueue = AsyncHandler.createInstance("camera-legacy");
             int number = CameraLegacySpecImpl.getCameraNumber(mConnectRequest.getCameraType());
             Camera.getCameraInfo(number, mCameraInfo);
 
@@ -94,20 +91,30 @@ class CameraLegacyManagerImpl extends CameraControlManager {
         }
     }
 
+    private void commitCameraParams() {
+        try {
+            mCamera.setParameters(mParameters);
+            mParameters = mCamera.getParameters();
+        } catch (Exception e) {
+
+        }
+    }
+
     /**
      * デバイスの回転角にプレビュー角度を合わせる
      */
     private void requestPreviewRotateLinkDevice() {
         int deviceRotateDegree = ContextUtil.getDeviceRotateDegree(mContext);
 
-        int cameraDegree = 0;
         if (mCameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-            cameraDegree = (mCameraInfo.orientation + deviceRotateDegree) % 360;
-            cameraDegree = (360 - cameraDegree) % 360;  // compensate the mirror
+            deviceRotateDegree = (mCameraInfo.orientation + deviceRotateDegree) % 360;
+            deviceRotateDegree = (360 - deviceRotateDegree) % 360;  // compensate the mirror
         } else {  // back-facing
-            cameraDegree = (mCameraInfo.orientation - deviceRotateDegree + 360) % 360;
+            deviceRotateDegree = (mCameraInfo.orientation - deviceRotateDegree + 360) % 360;
         }
-        mCamera.setDisplayOrientation(cameraDegree);
+        mParameters.setRotation((deviceRotateDegree + 180) % 360);
+        commitCameraParams();
+        mCamera.setDisplayOrientation(deviceRotateDegree);
     }
 
     /**
@@ -116,18 +123,20 @@ class CameraLegacyManagerImpl extends CameraControlManager {
     private void updateEnvironment(CameraEnvironmentRequest env) throws CameraException {
         if (env.getWhiteBalance() != null) {
             mParameters.setWhiteBalance(env.getWhiteBalance().getRawName());
+            commitCameraParams();
         }
         if (env.getScene() != null) {
             mParameters.setSceneMode(env.getScene().getRawName());
+            commitCameraParams();
         }
         if (env.getFocusMode() != null) {
             mParameters.setFocusMode(env.getFocusMode().getRawName());
+            commitCameraParams();
         }
         if (env.getFlashMode() != null) {
             mParameters.setFlashMode(env.getFlashMode().getRawName());
+            commitCameraParams();
         }
-
-        mCamera.setParameters(mParameters);
     }
 
     private void startCameraPreview() throws CameraException {
@@ -146,6 +155,9 @@ class CameraLegacyManagerImpl extends CameraControlManager {
             if (!isConnected()) {
                 throw new IllegalStateException("not connected");
             }
+            mParameters.setPreviewSize(mPreviewRequest.getPreviewSize().getWidth(), mPreviewRequest.getPreviewSize().getHeight());
+            commitCameraParams();
+
             requestPreviewRotateLinkDevice();
             updateEnvironment(env);
             startCameraPreview();
@@ -176,12 +188,9 @@ class CameraLegacyManagerImpl extends CameraControlManager {
             mCamera.autoFocus((success, camera) -> {
                 resultHolder.set(success);
             });
-
-            try {
-                return resultHolder.getWithWait(1000 * 3);
-            } catch (Exception e) {
-                return false;
-            }
+            return resultHolder.getWithWait(1000 * 3);
+        } catch (Exception e) {
+            return false;
         } finally {
             CameraLog.hardware("AutoFocus %d ms", timer.end());
         }
@@ -190,33 +199,44 @@ class CameraLegacyManagerImpl extends CameraControlManager {
     @NonNull
     @Override
     public PictureData takePicture(@Nullable CameraEnvironmentRequest env) throws CameraException {
-        synchronized (lock) {
-            if (!isConnected() || !isPreviewNow()) {
-                throw new IllegalStateException("Preview not start");
+        if (!isConnected() || !isPreviewNow()) {
+            throw new IllegalStateException("Preview not start");
+        }
+
+        try {
+            synchronized (lock) {
+                requestAutoFocus();
+
+                if (mPictureShotRequest.hasLocation()) {
+                    mParameters.setGpsLatitude(mPictureShotRequest.getLatitude());
+                    mParameters.setGpsLongitude(mPictureShotRequest.getLongitude());
+                    commitCameraParams();
+                }
+
+                // Jpeg画質指定
+                mParameters.setJpegQuality(100);
+                commitCameraParams();
+
+                mParameters.setPreviewSize(mPreviewRequest.getPreviewSize().getWidth(), mPreviewRequest.getPreviewSize().getHeight());
+                commitCameraParams();
+
+                mParameters.setPictureSize(mPictureShotRequest.getCaptureSize().getWidth(), mPictureShotRequest.getCaptureSize().getHeight());
+                commitCameraParams();
+
+                updateEnvironment(env);
+
+                Holder<byte[]> jpegBuffer = new Holder<>();
+                mCamera.takePicture(null, null, (byte[] data, Camera camera) -> {
+                    jpegBuffer.set(data);
+                });
+
+
+                PictureData data = new PictureData(mPictureShotRequest.getCaptureSize().getWidth(), mPictureShotRequest.getCaptureSize().getHeight(), jpegBuffer.getWithWait(1000 * 3));
+
+                return data;
             }
-
-            requestAutoFocus();
-
-            if (mPictureShotRequest.hasLocation()) {
-                mParameters.setGpsLatitude(mPictureShotRequest.getLatitude());
-                mParameters.setGpsLongitude(mPictureShotRequest.getLongitude());
-            }
-
-            // Jpeg画質指定
-            mParameters.setJpegQuality(100);
-
-            mParameters.setPictureSize(mPictureShotRequest.getCaptureSize().getWidth(), mPictureShotRequest.getCaptureSize().getHeight());
-
-            updateEnvironment(env);
-
-            Holder<byte[]> jpegBuffer = new Holder<>();
-            mCamera.takePicture(null, null, (byte[] data, Camera camera) -> {
-                jpegBuffer.set(data);
-            });
-
-
-            PictureData data = new PictureData(mPictureShotRequest.getCaptureSize().getWidth(), mPictureShotRequest.getCaptureSize().getHeight(), jpegBuffer.getWithWait(1000 * 10));
-            return data;
+        } finally {
+            startPreview(env);
         }
 //        return mTaskQueue.await(() -> {
 //        });
