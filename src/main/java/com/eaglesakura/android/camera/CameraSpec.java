@@ -207,6 +207,22 @@ public class CameraSpec {
         return mSceneSpecs;
     }
 
+    public boolean isSupported(Scene scene) {
+        return mSceneSpecs.contains(scene);
+    }
+
+    public boolean isSupported(WhiteBalance whiteBalance) {
+        return mWhiteBalanceSpecs.contains(whiteBalance);
+    }
+
+    public boolean isSupported(FlashMode flashMode) {
+        return mFlashModeSpecs.contains(flashMode);
+    }
+
+    public boolean isSupported(FocusMode focusMode) {
+        return mFocusModeSpecs.contains(focusMode);
+    }
+
     @NonNull
     public List<WhiteBalance> getWhiteBalanceSpecs() {
         return mWhiteBalanceSpecs;

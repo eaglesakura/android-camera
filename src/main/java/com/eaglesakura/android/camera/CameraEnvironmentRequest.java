@@ -29,8 +29,25 @@ public final class CameraEnvironmentRequest {
         return this;
     }
 
+    public CameraEnvironmentRequest focus(CameraSpec spec, FocusMode focusMode) {
+        if (spec.isSupported(focusMode)) {
+            mFocusMode = focusMode;
+        }
+        return this;
+    }
+
     public CameraEnvironmentRequest scene(Scene scene) {
         mScene = scene;
+        return this;
+    }
+
+    /**
+     * 指定したシーンがサポートされていればセットする
+     */
+    public CameraEnvironmentRequest scene(CameraSpec spec, Scene scene) {
+        if (spec.isSupported(scene)) {
+            mScene = scene;
+        }
         return this;
     }
 
@@ -39,8 +56,22 @@ public final class CameraEnvironmentRequest {
         return this;
     }
 
+    public CameraEnvironmentRequest whiteBalance(CameraSpec spec, WhiteBalance whiteBalance) {
+        if (spec.isSupported(whiteBalance)) {
+            mWhiteBalance = whiteBalance;
+        }
+        return this;
+    }
+
     public CameraEnvironmentRequest flash(FlashMode flashMode) {
         mFlashMode = flashMode;
+        return this;
+    }
+
+    public CameraEnvironmentRequest flash(CameraSpec spec, FlashMode flashMode) {
+        if (spec.isSupported(flashMode)) {
+            mFlashMode = flashMode;
+        }
         return this;
     }
 
