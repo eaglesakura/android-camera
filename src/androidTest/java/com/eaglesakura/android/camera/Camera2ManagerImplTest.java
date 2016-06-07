@@ -3,6 +3,7 @@ package com.eaglesakura.android.camera;
 import com.eaglesakura.android.camera.log.CameraLog;
 import com.eaglesakura.android.camera.preview.OffscreenPreviewSurface;
 import com.eaglesakura.android.camera.spec.CameraType;
+import com.eaglesakura.android.camera.spec.CaptureSize;
 import com.eaglesakura.android.camera.spec.FlashMode;
 import com.eaglesakura.android.camera.spec.WhiteBalance;
 import com.eaglesakura.android.device.external.StorageInfo;
@@ -34,7 +35,7 @@ public class Camera2ManagerImplTest extends DeviceTestCase {
 
         cameraManager.connect();
 
-        OffscreenPreviewSurface previewSurface = new OffscreenPreviewSurface(getContext());
+        OffscreenPreviewSurface previewSurface = new OffscreenPreviewSurface(getContext(), previewRequest.getPreviewSize());
         try {
             SurfaceTexture surface = previewSurface.createSurface();
             cameraManager.startPreview(new Surface(surface), previewRequest, envRequest);
@@ -60,7 +61,11 @@ public class Camera2ManagerImplTest extends DeviceTestCase {
     @Test
     public void 撮影を行う() throws Throwable {
         CameraSpec spec = CameraSpec.getSpecs(getContext(), CameraType.Front);
-        CameraPreviewRequest previewRequest = new CameraPreviewRequest().size(spec.getPreviewSize(640, 480));
+
+        CaptureSize previewSize = spec.getPreviewSize(640, 480);
+        assertNotNull(previewSize);
+
+        CameraPreviewRequest previewRequest = new CameraPreviewRequest().size(previewSize);
         CameraConnectRequest connectRequest = new CameraConnectRequest(spec.getType());
         CameraEnvironmentRequest envRequest = new CameraEnvironmentRequest().flash(FlashMode.SETTING_OFF);
         CameraPictureShotRequest shotRequest =
@@ -71,7 +76,7 @@ public class Camera2ManagerImplTest extends DeviceTestCase {
 
         cameraManager.connect();
 
-        OffscreenPreviewSurface previewSurface = new OffscreenPreviewSurface(getContext());
+        OffscreenPreviewSurface previewSurface = new OffscreenPreviewSurface(getContext(), previewRequest.getPreviewSize());
         try {
             SurfaceTexture surface = previewSurface.createSurface();
             cameraManager.startPreview(new Surface(surface), previewRequest, envRequest);

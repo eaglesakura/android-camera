@@ -1,5 +1,6 @@
 package com.eaglesakura.android.camera.preview;
 
+import com.eaglesakura.android.camera.spec.CaptureSize;
 import com.eaglesakura.android.glkit.egl.EGLSpecRequest;
 import com.eaglesakura.android.glkit.egl.GLESVersion;
 import com.eaglesakura.android.glkit.egl.IEGLDevice;
@@ -9,6 +10,8 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.os.Build;
+import android.support.annotation.IntRange;
+import android.support.annotation.NonNull;
 
 import static android.opengl.GLES20.glDeleteTextures;
 import static android.opengl.GLES20.glGenTextures;
@@ -18,19 +21,31 @@ import static android.opengl.GLES20.glGenTextures;
  */
 @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 public class OffscreenPreviewSurface {
+    @NonNull
+    private final Context mContext;
 
-    final Context mContext;
+    private EGL11Manager mEglManager;
 
-    EGL11Manager mEglManager;
+    private IEGLDevice mEglDevice;
 
-    IEGLDevice mEglDevice;
+    private SurfaceTexture mSurface;
 
-    SurfaceTexture mSurface;
+    private int mPreviewTexture;
 
-    int mPreviewTexture;
+    @NonNull
+    private final CaptureSize mCaptureSize;
 
-    public OffscreenPreviewSurface(Context context) {
-        this.mContext = context;
+    public OffscreenPreviewSurface(@NonNull Context context, @NonNull CaptureSize captureSize) {
+        mContext = context;
+        mCaptureSize = captureSize;
+    }
+
+    private int getRequestPreviewWidth() {
+        return mCaptureSize.getWidth();
+    }
+
+    private int getRequestPreviewHeight() {
+        return mCaptureSize.getHeight();
     }
 
     private SurfaceTexture createSurfaceTexture() {
@@ -41,13 +56,18 @@ public class OffscreenPreviewSurface {
         eglSpecRequest.version = GLESVersion.GLES20;
         mEglManager.initialize(eglSpecRequest);
         mEglDevice = mEglManager.newDevice(null);
-        mEglDevice.createPBufferSurface(1, 1);
+        mEglDevice.createPBufferSurface(getRequestPreviewWidth(), getRequestPreviewHeight());
         if (!mEglDevice.bind()) {
             throw new IllegalStateException("EGL createSurface failed");
         }
 
         this.mPreviewTexture = genPreviewTexture();
         mSurface = new SurfaceTexture(mPreviewTexture);
+
+        // for UpdateVersion
+        if (Build.VERSION.SDK_INT >= 15) {
+            mSurface.setDefaultBufferSize(getRequestPreviewWidth(), getRequestPreviewHeight());
+        }
         return mSurface;
     }
 
