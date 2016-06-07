@@ -161,6 +161,14 @@ public class CameraSpec {
     }
 
     /**
+     * サポートしているプレビューサイズのうち、最も小さいサイズを返却する
+     */
+    @NonNull
+    public CaptureSize getMinimumPreviewSize() {
+        return mPreviewSizes.get(mPreviewSizes.size() - 1);
+    }
+
+    /**
      * 指定したアスペクト比で最も大きなサイズを取得する
      */
     @NonNull
@@ -197,6 +205,22 @@ public class CameraSpec {
     @NonNull
     public List<Scene> getSceneSpecs() {
         return mSceneSpecs;
+    }
+
+    public boolean isSupported(Scene scene) {
+        return mSceneSpecs.contains(scene);
+    }
+
+    public boolean isSupported(WhiteBalance whiteBalance) {
+        return mWhiteBalanceSpecs.contains(whiteBalance);
+    }
+
+    public boolean isSupported(FlashMode flashMode) {
+        return mFlashModeSpecs.contains(flashMode);
+    }
+
+    public boolean isSupported(FocusMode focusMode) {
+        return mFocusModeSpecs.contains(focusMode);
     }
 
     @NonNull
@@ -314,7 +338,7 @@ public class CameraSpec {
             return Camera2SpecImpl.getSpecs(context, type);
         } else {
             // Camera1
-            throw new IllegalStateException();
+            return CameraLegacySpecImpl.getSpecs(context, type);
         }
     }
 }

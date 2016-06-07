@@ -70,6 +70,10 @@ public final class WhiteBalance {
         }
     }
 
+    public String getRawName() {
+        return mName;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof WhiteBalance)) {

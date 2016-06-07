@@ -1,12 +1,11 @@
 package com.eaglesakura.android.camera;
 
-import com.eaglesakura.android.camera.Camera2SpecImpl;
 import com.eaglesakura.android.camera.log.CameraLog;
 import com.eaglesakura.android.camera.spec.CameraType;
+import com.eaglesakura.android.camera.spec.CaptureFormat;
 import com.eaglesakura.android.camera.spec.CaptureSize;
 import com.eaglesakura.android.camera.spec.FlashMode;
 import com.eaglesakura.android.camera.spec.FocusMode;
-import com.eaglesakura.android.camera.spec.CaptureFormat;
 import com.eaglesakura.android.camera.spec.Scene;
 import com.eaglesakura.android.camera.spec.WhiteBalance;
 import com.eaglesakura.android.devicetest.DeviceTestCase;

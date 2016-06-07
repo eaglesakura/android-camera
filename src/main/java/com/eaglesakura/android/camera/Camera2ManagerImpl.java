@@ -5,17 +5,19 @@ import com.eaglesakura.android.camera.error.CameraException;
 import com.eaglesakura.android.camera.error.CameraSecurityException;
 import com.eaglesakura.android.camera.error.PictureFailedException;
 import com.eaglesakura.android.camera.log.CameraLog;
+import com.eaglesakura.android.camera.preview.CameraSurface;
 import com.eaglesakura.android.camera.spec.CameraType;
+import com.eaglesakura.android.camera.spec.CaptureFormat;
 import com.eaglesakura.android.camera.spec.FocusMode;
 import com.eaglesakura.android.thread.async.AsyncHandler;
 import com.eaglesakura.android.util.AndroidThreadUtil;
 import com.eaglesakura.android.util.ContextUtil;
 import com.eaglesakura.thread.Holder;
-import com.eaglesakura.util.ThrowableRunner;
 import com.eaglesakura.util.Util;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.graphics.ImageFormat;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -33,7 +35,7 @@ import android.support.annotation.Nullable;
 import android.view.Surface;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -42,21 +44,62 @@ class Camera2ManagerImpl extends CameraControlManager {
 
     final CameraCharacteristics mCharacteristics;
 
+    /**
+     * Openされたカメラ
+     */
+    @NonNull
     private CameraDevice mCamera;
 
-    private CameraCaptureSession mPreviewSession;
+    /**
+     * 撮影用セッション
+     *
+     * MEMO: 基本的に使いまわさなければ撮影とプレビューを両立できない
+     */
+    private CameraCaptureSession mCaptureSession;
 
-    private CameraPreviewRequest mPreviewRequest;
+    private CaptureRequest.Builder mPreviewCaptureRequest;
 
-    private CameraEnvironmentRequest mPreviewEnvironment;
+    /**
+     * プレビュー用バッファ
+     */
+    private CameraSurface mPreviewSurface;
 
-    private Surface mPreviewSurface;
+    /**
+     * 撮影用バッファ
+     */
+    private ImageReader mImageReader;
 
+    /**
+     * カメラ制御用のコールバックスレッド
+     */
     private AsyncHandler mControlHandler;
 
+    /**
+     * 画像処理用のコールバックスレッド
+     */
     private AsyncHandler mProcessingHandler;
 
+    /**
+     * 処理順を制御するためのキューイング
+     */
     private AsyncHandler mTaskQueue;
+
+    /**
+     * 接続時に確定されたプレビューリクエスト
+     */
+    private CameraPreviewRequest mPreviewRequest;
+
+    /**
+     * 接続時に確定された撮影リクエスト
+     */
+    private CameraPictureShotRequest mPictureShotRequest;
+
+    /**
+     * プレビュー中である場合true
+     */
+    private static final int FLAG_NOW_PREVIEW = 0x01 << 0;
+
+    private int mFlags;
 
     Camera2ManagerImpl(Context context, CameraConnectRequest request) throws CameraException {
         super(context, request);
@@ -65,19 +108,18 @@ class Camera2ManagerImpl extends CameraControlManager {
     }
 
     @Override
-    public Surface getPreviewSurface() {
-        return mPreviewSurface;
-    }
-
-    @Override
-    public boolean connect() throws CameraException {
+    public boolean connect(@Nullable CameraSurface previewSurface, @Nullable CameraPreviewRequest previewRequest, @Nullable CameraPictureShotRequest shotRequest) throws CameraException {
         AndroidThreadUtil.assertBackgroundThread();
 
         mControlHandler = AsyncHandler.createInstance("camera-control");
         mProcessingHandler = AsyncHandler.createInstance("camera-processing");
         mTaskQueue = AsyncHandler.createInstance("camera-queue");
 
-        ThrowableRunner<CameraDevice, CameraException> runner = new ThrowableRunner<>(() -> {
+        mCamera = mTaskQueue.await(() -> {
+            mPreviewSurface = previewSurface;
+            mPreviewRequest = previewRequest;
+            mPictureShotRequest = shotRequest;
+
             Holder<CameraException> errorHolder = new Holder<>();
             Holder<CameraDevice> cameraDeviceHolder = new Holder<>();
             try {
@@ -119,9 +161,20 @@ class Camera2ManagerImpl extends CameraControlManager {
                 throw new CameraSecurityException(e);
             }
         });
-        mTaskQueue.post(runner);
-        mCamera = runner.await();
         return true;
+    }
+
+    @Override
+    public void startPreview(@Nullable CameraEnvironmentRequest env) throws CameraException {
+        mTaskQueue.await(() -> {
+            startPreviewImpl(env);
+            return this;
+        });
+    }
+
+    @Override
+    public boolean isPreviewNow() {
+        return (mFlags & FLAG_NOW_PREVIEW) != 0;
     }
 
     @Override
@@ -133,7 +186,7 @@ class Camera2ManagerImpl extends CameraControlManager {
     public void disconnect() {
         AndroidThreadUtil.assertBackgroundThread();
 
-        ThrowableRunner<Object, RuntimeException> runner = new ThrowableRunner<>(() -> {
+        mTaskQueue.await(() -> {
             if (!isConnected()) {
                 throw new IllegalStateException("not conencted");
             }
@@ -142,6 +195,11 @@ class Camera2ManagerImpl extends CameraControlManager {
                 stopPreviewImpl();
             } catch (Exception e) {
 
+            }
+
+            if (mImageReader != null) {
+                mImageReader.close();
+                mImageReader = null;
             }
 
             try {
@@ -153,9 +211,6 @@ class Camera2ManagerImpl extends CameraControlManager {
 
             return this;
         });
-
-        mTaskQueue.post(runner);
-        runner.await();
 
         // ハンドラを廃棄する
         mControlHandler.dispose();
@@ -171,7 +226,7 @@ class Camera2ManagerImpl extends CameraControlManager {
         int sensorOrientation = mCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
         int deviceRotateDegree = ContextUtil.getDeviceRotateDegree(mContext);
 
-        if (mRequest.getCameraType() == CameraType.Back) {
+        if (mConnectRequest.getCameraType() == CameraType.Back) {
             deviceRotateDegree = (360 - sensorOrientation + deviceRotateDegree) % 360;
         } else {
             deviceRotateDegree = (sensorOrientation + deviceRotateDegree + 360) % 360;
@@ -210,26 +265,25 @@ class Camera2ManagerImpl extends CameraControlManager {
         return request;
     }
 
-    @Override
-    public void request(CameraEnvironmentRequest env) throws CameraException {
-        AndroidThreadUtil.assertBackgroundThread();
-
-        startPreview(mPreviewSurface, mPreviewRequest, env);
-
-//
-//        try {
-//            CaptureRequest.Builder builder = newCaptureRequest(env, CameraDevice.TEMPLATE_PREVIEW);
-//            builder.addTarget(mPreviewSurface);
-//
-//            mPreviewSession.stopRepeating();
-//            mPreviewSession.setRepeatingRequest(builder.build(), null, null);
-//        } catch (CameraAccessException e) {
-//            throw new CameraAccessFailedException(e);
-//        }
-    }
-
     @NonNull
-    private CameraCaptureSession newSession(List<Surface> surfaces) throws CameraException {
+    private CameraCaptureSession getSession() throws CameraException {
+        if (mCaptureSession != null) {
+            return mCaptureSession;
+        }
+
+        List<Surface> surfaces = new ArrayList<>();
+        if (mPreviewRequest != null) {
+            surfaces.add(mPreviewSurface.getNativeSurface(mPreviewRequest.getPreviewSize()));
+        }
+        if (mPictureShotRequest != null) {
+            mImageReader = ImageReader.newInstance(
+                    mPictureShotRequest.getCaptureSize().getWidth(), mPictureShotRequest.getCaptureSize().getHeight(),
+                    mPictureShotRequest.getCaptureFormat() == CaptureFormat.Raw ? ImageFormat.RAW_SENSOR : ImageFormat.JPEG,
+                    2
+            );
+            surfaces.add(mImageReader.getSurface());
+        }
+
         Holder<CameraException> errorHolder = new Holder<>();
         Holder<CameraCaptureSession> sessionHolder = new Holder<>();
 
@@ -257,73 +311,49 @@ class Camera2ManagerImpl extends CameraControlManager {
             throw errorHolder.get();
         }
 
-        return sessionHolder.get();
+        mCaptureSession = sessionHolder.get();
+        return mCaptureSession;
     }
 
-    private void startPreviewImpl(@NonNull Surface surface, @NonNull CameraPreviewRequest previewRequest, @Nullable CameraEnvironmentRequest env) throws CameraException {
+    private void startPreviewImpl(@Nullable CameraEnvironmentRequest env) throws CameraException {
         try {
             // セッションを生成する
-            CameraCaptureSession previewSession = newSession(Arrays.asList(surface));
+            CameraCaptureSession previewSession = getSession();
 
             // プレビューを開始する
-            CaptureRequest.Builder builder = newCaptureRequest(env, CameraDevice.TEMPLATE_PREVIEW);
-            builder.addTarget(surface);
-            previewSession.stopRepeating();
-            previewSession.setRepeatingRequest(builder.build(), null, null);
-
-            synchronized (this) {
-                mPreviewSurface = surface;
-                mPreviewSession = previewSession;
-                mPreviewRequest = previewRequest;
-                mPreviewEnvironment = env;
-
+            if (mPreviewCaptureRequest == null) {
+                CaptureRequest.Builder builder = newCaptureRequest(env, CameraDevice.TEMPLATE_PREVIEW);
+                builder.addTarget(mPreviewSurface.getNativeSurface(mPreviewRequest.getPreviewSize()));
+                mPreviewCaptureRequest = builder;
             }
+            previewSession.stopRepeating();
+            previewSession.setRepeatingRequest(mPreviewCaptureRequest.build(), null, null);
+
+            mFlags |= FLAG_NOW_PREVIEW;
         } catch (CameraAccessException e) {
             throw new CameraAccessFailedException(e);
         }
     }
 
-    @Override
-    public final void startPreview(@NonNull Surface surface, @NonNull CameraPreviewRequest previewRequest, @Nullable CameraEnvironmentRequest env) throws CameraException {
-        ThrowableRunner<Object, CameraException> runner = new ThrowableRunner<>(() -> {
-            startPreviewImpl(surface, previewRequest, env);
-            return this;
-        });
-
-        mTaskQueue.post(runner);
-        runner.await();
-    }
 
     private void stopPreviewImpl() {
         synchronized (this) {
-            if (mPreviewSession == null) {
-                throw new IllegalStateException();
+            try {
+                mCaptureSession.stopRepeating();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
-            try {
-                mPreviewSession.stopRepeating();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            try {
-                mPreviewSession.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            mPreviewSession = null;
-            mPreviewRequest = null;
+            mFlags &= (~FLAG_NOW_PREVIEW);
         }
     }
 
     @Override
     public final void stopPreview() {
-        ThrowableRunner<Object, RuntimeException> runner = new ThrowableRunner<>(() -> {
+        mTaskQueue.await(() -> {
             stopPreviewImpl();
             return this;
         });
-
-        mTaskQueue.post(runner);
-        runner.await();
     }
 
     private void startPreCapture(CameraCaptureSession session, Surface imageSurface, @Nullable CameraEnvironmentRequest env) throws CameraException, CameraAccessException {
@@ -335,6 +365,7 @@ class Camera2ManagerImpl extends CameraControlManager {
 
         Holder<CameraException> errorHolder = new Holder<>();
         Holder<Boolean> completedHolder = new Holder<>();
+        session.stopRepeating();
         session.capture(builder.build(), new CameraCaptureSession.CaptureCallback() {
             @Override
             public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
@@ -360,26 +391,14 @@ class Camera2ManagerImpl extends CameraControlManager {
         }
     }
 
-    PictureData takePictureImpl(@NonNull CameraPictureShotRequest request, @Nullable CameraEnvironmentRequest env) throws CameraException {
-        ImageReader imageReader = ImageReader.newInstance(
-                request.getCaptureSize().getWidth(), request.getCaptureSize().getHeight(),
-                Camera2SpecImpl.toImageFormatInt(request.getCaptureFormat()),
-                1
-        );
-
-        Surface tempPreviewSurface = mPreviewSurface;
-        CameraPreviewRequest tempPreviewRequeest = mPreviewRequest;
-        CameraEnvironmentRequest tempPreviewEnv = mPreviewEnvironment;
-        boolean pausePreview = mPreviewSession != null;
-
-        if (pausePreview) {
-            stopPreviewImpl();
+    PictureData takePictureImpl(@Nullable CameraEnvironmentRequest env) throws CameraException {
+        if (!isPreviewNow()) {
+            throw new IllegalStateException("Preview not started");
         }
 
-        CameraCaptureSession pictureSession = newSession(Arrays.asList(imageReader.getSurface()));
-
+        CameraCaptureSession session = getSession();
         try {
-            startPreCapture(pictureSession, imageReader.getSurface(), env);
+            startPreCapture(session, mPreviewSurface.getNativeSurface(mPreviewRequest.getPreviewSize()), env);
 
             Holder<CameraException> errorHolder = new Holder<>();
             Holder<PictureData> resultHolder = new Holder<>();
@@ -399,8 +418,8 @@ class Camera2ManagerImpl extends CameraControlManager {
             };
 
             // 画像圧縮完了コールバック
-            imageReader.setOnImageAvailableListener(it -> {
-                Image image = imageReader.acquireLatestImage();
+            mImageReader.setOnImageAvailableListener(it -> {
+                Image image = mImageReader.acquireLatestImage();
                 ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                 byte[] onMemoryFile = new byte[buffer.capacity()];
                 buffer.get(onMemoryFile);
@@ -414,15 +433,16 @@ class Camera2ManagerImpl extends CameraControlManager {
             builder.set(CaptureRequest.JPEG_ORIENTATION, getJpegOrientation());
 
             // Lat/Lng
-            if (request.hasLocation()) {
+            if (mPictureShotRequest.hasLocation()) {
                 Location loc = new Location("camera");
-                loc.setLatitude(request.getLatitude());
-                loc.setLongitude(request.getLongitude());
+                loc.setLatitude(mPictureShotRequest.getLatitude());
+                loc.setLongitude(mPictureShotRequest.getLongitude());
                 builder.set(CaptureRequest.JPEG_GPS_LOCATION, loc);
             }
 
-            builder.addTarget(imageReader.getSurface());
-            pictureSession.capture(builder.build(), captureCallback, mControlHandler);
+            builder.addTarget(mImageReader.getSurface());
+            session.stopRepeating();
+            session.capture(builder.build(), captureCallback, mControlHandler);
 
             while (errorHolder.get() == null && resultHolder.get() == null) {
                 Util.sleep(1);
@@ -440,22 +460,15 @@ class Camera2ManagerImpl extends CameraControlManager {
         } catch (CameraAccessException e) {
             throw new CameraAccessFailedException(e);
         } finally {
-            pictureSession.close();
-            imageReader.close();
-
-            if (pausePreview) {
-                startPreviewImpl(tempPreviewSurface, tempPreviewRequeest, tempPreviewEnv);
+            mImageReader.setOnImageAvailableListener(null, null);
+            if ((mFlags & FLAG_NOW_PREVIEW) != 0) {
+                startPreviewImpl(env);
             }
-
         }
     }
 
     @Override
-    public final PictureData takePicture(@NonNull CameraPictureShotRequest request, @Nullable CameraEnvironmentRequest env) throws CameraException {
-        ThrowableRunner<PictureData, CameraException> runner = new ThrowableRunner<>(() -> {
-            return takePictureImpl(request, env);
-        });
-        mTaskQueue.post(runner);
-        return runner.await();
+    public final PictureData takePicture(@Nullable CameraEnvironmentRequest env) throws CameraException {
+        return mTaskQueue.await(() -> takePictureImpl(env));
     }
 }

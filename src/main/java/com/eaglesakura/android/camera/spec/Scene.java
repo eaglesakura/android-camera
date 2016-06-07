@@ -122,6 +122,10 @@ public final class Scene {
         return mName.hashCode();
     }
 
+    public String getRawName() {
+        return mName;
+    }
+
     /**
      * シーンを取得する
      */
