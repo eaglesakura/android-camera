@@ -338,7 +338,7 @@ public class CameraSpec {
             return Camera2SpecImpl.getSpecs(context, type);
         } else {
             // Camera1
-            throw new IllegalStateException();
+            return CameraLegacySpecImpl.getSpecs(context, type);
         }
     }
 }

@@ -5,9 +5,7 @@ import com.eaglesakura.util.StringUtil;
 
 import android.content.Context;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -50,12 +48,16 @@ public class FlashMode {
     /**
      * API設定名
      */
-    private final String name;
+    private final String mName;
 
     FlashMode(String apiSettingName) {
-        this.name = apiSettingName;
+        this.mName = apiSettingName;
     }
 
+
+    public String getRawName() {
+        return mName;
+    }
 
     /**
      * 設定名を取得する
@@ -63,9 +65,9 @@ public class FlashMode {
      * @return 日本語での設定名
      */
     public String name(Context context) {
-        String result = ContextUtil.getStringFromIdName(context, String.format("Camera.FlashMode.%s", name.replaceAll("-", "_")));
+        String result = ContextUtil.getStringFromIdName(context, String.format("Camera.FlashMode.%s", mName.replaceAll("-", "_")));
         if (StringUtil.isEmpty(result)) {
-            return name;
+            return mName;
         } else {
             return result;
         }
@@ -78,19 +80,19 @@ public class FlashMode {
 
         FlashMode flashMode = (FlashMode) o;
 
-        return name != null ? name.equals(flashMode.name) : flashMode.name == null;
+        return mName != null ? mName.equals(flashMode.mName) : flashMode.mName == null;
 
     }
 
     @Override
     public int hashCode() {
-        return name != null ? name.hashCode() : 0;
+        return mName != null ? mName.hashCode() : 0;
     }
 
     /**
      * フラッシュ設定モードを取得する
      */
-    static FlashMode fromName(String mode) {
+    public static FlashMode fromName(String mode) {
         FlashMode result = gFlashSpecMap.get(mode);
         if (result == null) {
             result = new FlashMode(mode);

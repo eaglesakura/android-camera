@@ -2,13 +2,11 @@ package com.eaglesakura.android.camera;
 
 import com.eaglesakura.android.camera.error.CameraException;
 import com.eaglesakura.android.camera.preview.CameraSurface;
-import com.eaglesakura.android.thread.async.AsyncHandler;
 
 import android.content.Context;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.view.Surface;
 
 /**
  * 同期的なカメラ制御を提供する
@@ -25,11 +23,11 @@ import android.view.Surface;
 public abstract class CameraControlManager {
     protected final Context mContext;
 
-    protected final CameraConnectRequest mRequest;
+    protected final CameraConnectRequest mConnectRequest;
 
     public CameraControlManager(Context context, CameraConnectRequest request) {
         mContext = context.getApplicationContext();
-        mRequest = request;
+        mConnectRequest = request;
     }
 
     /**
@@ -68,13 +66,48 @@ public abstract class CameraControlManager {
     @NonNull
     public abstract PictureData takePicture(@Nullable CameraEnvironmentRequest env) throws CameraException;
 
-    public static CameraControlManager newInstance(Context context, CameraConnectRequest request) throws CameraException {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+    public enum CameraApi {
+        /**
+         * Android 4.4以下の古いAPI
+         */
+        Legacy,
+
+        /**
+         * Camera2 API
+         */
+        Camera2,
+
+        /**
+         * 自動で取得する
+         */
+        Default,
+    }
+
+    /**
+     * カメラ制御クラスを生成する
+     */
+    public static CameraControlManager newInstance(Context context, CameraApi api, CameraConnectRequest request) throws CameraException {
+        if (api.equals(CameraApi.Default)) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                api = CameraApi.Camera2;
+            } else {
+                api = CameraApi.Legacy;
+            }
+        }
+
+        if (api == CameraApi.Camera2) {
             // Camera2
             return new Camera2ManagerImpl(context, request);
         } else {
             // Camera1
-            throw new IllegalStateException();
+            return new CameraLegacyManagerImpl(context, request);
         }
+    }
+
+    /**
+     * デフォルトのAPIでカメラ制御クラスを生成する
+     */
+    public static CameraControlManager newInstance(Context context, CameraConnectRequest request) throws CameraException {
+        return newInstance(context, CameraApi.Default, request);
     }
 }

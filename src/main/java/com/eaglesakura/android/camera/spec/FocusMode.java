@@ -70,6 +70,10 @@ public class FocusMode {
         }
     }
 
+    public String getRawName() {
+        return mName;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -89,7 +93,7 @@ public class FocusMode {
     /**
      * フォーカス設定モードを取得する
      */
-    static FocusMode fromName(String mode) {
+    public static FocusMode fromName(String mode) {
         FocusMode result = gFocusModeSpecMap.get(mode);
         if (result == null) {
             result = new FocusMode(mode);

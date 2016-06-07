@@ -12,10 +12,6 @@ public class CameraSurface {
 
     private SurfaceTexture mSurfaceTexture;
 
-    public CameraSurface(Surface nativeSurface) {
-        mNativeSurface = nativeSurface;
-    }
-
     public CameraSurface(SurfaceTexture surfaceTexture) {
         mSurfaceTexture = surfaceTexture;
     }
@@ -37,5 +33,16 @@ public class CameraSurface {
         }
 
         return mNativeSurface;
+    }
+
+
+    @NonNull
+    public SurfaceTexture getSurfaceTexture(CaptureSize previewSize) {
+        if (mSurfaceTexture != null) {
+            if (Build.VERSION.SDK_INT >= 15) {
+                mSurfaceTexture.setDefaultBufferSize(previewSize.getWidth(), previewSize.getHeight());
+            }
+        }
+        return mSurfaceTexture;
     }
 }

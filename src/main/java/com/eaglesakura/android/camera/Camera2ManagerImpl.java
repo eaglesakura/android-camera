@@ -13,7 +13,6 @@ import com.eaglesakura.android.thread.async.AsyncHandler;
 import com.eaglesakura.android.util.AndroidThreadUtil;
 import com.eaglesakura.android.util.ContextUtil;
 import com.eaglesakura.thread.Holder;
-import com.eaglesakura.util.ThrowableRunner;
 import com.eaglesakura.util.Util;
 
 import android.annotation.TargetApi;
@@ -37,7 +36,6 @@ import android.view.Surface;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -228,7 +226,7 @@ class Camera2ManagerImpl extends CameraControlManager {
         int sensorOrientation = mCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
         int deviceRotateDegree = ContextUtil.getDeviceRotateDegree(mContext);
 
-        if (mRequest.getCameraType() == CameraType.Back) {
+        if (mConnectRequest.getCameraType() == CameraType.Back) {
             deviceRotateDegree = (360 - sensorOrientation + deviceRotateDegree) % 360;
         } else {
             deviceRotateDegree = (sensorOrientation + deviceRotateDegree + 360) % 360;

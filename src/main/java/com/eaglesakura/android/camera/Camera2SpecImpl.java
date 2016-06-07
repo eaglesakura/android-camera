@@ -1,10 +1,8 @@
 package com.eaglesakura.android.camera;
 
-import com.eaglesakura.android.camera.CameraSpec;
 import com.eaglesakura.android.camera.error.CameraAccessFailedException;
 import com.eaglesakura.android.camera.error.CameraException;
 import com.eaglesakura.android.camera.error.CameraNotFoundException;
-import com.eaglesakura.android.camera.error.CameraSpecNotFoundException;
 import com.eaglesakura.android.camera.spec.CameraType;
 import com.eaglesakura.android.camera.spec.CaptureFormat;
 import com.eaglesakura.android.camera.spec.CaptureSize;
@@ -12,13 +10,10 @@ import com.eaglesakura.android.camera.spec.FlashMode;
 import com.eaglesakura.android.camera.spec.FocusMode;
 import com.eaglesakura.android.camera.spec.Scene;
 import com.eaglesakura.android.camera.spec.WhiteBalance;
-import com.eaglesakura.android.util.AndroidThreadUtil;
-import com.eaglesakura.lambda.CancelCallback;
 import com.eaglesakura.util.CollectionUtil;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
