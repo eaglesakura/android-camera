@@ -97,10 +97,10 @@ public abstract class CameraControlManager {
 
         if (api == CameraApi.Camera2) {
             // Camera2
-            return new Camera2ManagerImpl(context, request);
+            return new Camera2ControlManager(context, request);
         } else {
             // Camera1
-            return new CameraLegacyManagerImpl(context, request);
+            return new LegacyCameraControlManager(context, request);
         }
     }
 

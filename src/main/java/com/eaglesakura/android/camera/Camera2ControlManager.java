@@ -38,8 +38,11 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Android 5.0以降のCamera2 APIに対応したマネージャ
+ */
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-class Camera2ManagerImpl extends CameraControlManager {
+public class Camera2ControlManager extends CameraControlManager {
     final Camera2SpecImpl mSpec;
 
     final CameraCharacteristics mCharacteristics;
@@ -101,7 +104,7 @@ class Camera2ManagerImpl extends CameraControlManager {
 
     private int mFlags;
 
-    Camera2ManagerImpl(Context context, CameraConnectRequest request) throws CameraException {
+    Camera2ControlManager(Context context, CameraConnectRequest request) throws CameraException {
         super(context, request);
         mSpec = new Camera2SpecImpl(context);
         mCharacteristics = mSpec.getCameraSpec(request.getCameraType());
