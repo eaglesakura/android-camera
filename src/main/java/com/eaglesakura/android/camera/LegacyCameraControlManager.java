@@ -4,22 +4,22 @@ import com.eaglesakura.android.camera.error.CameraAccessFailedException;
 import com.eaglesakura.android.camera.error.CameraException;
 import com.eaglesakura.android.camera.log.CameraLog;
 import com.eaglesakura.android.camera.preview.CameraSurface;
-import com.eaglesakura.android.thread.async.AsyncHandler;
 import com.eaglesakura.android.util.ContextUtil;
 import com.eaglesakura.thread.Holder;
-import com.eaglesakura.util.MathUtil;
 import com.eaglesakura.util.Timer;
 
 import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
-import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import java.io.IOException;
 
-class CameraLegacyManagerImpl extends CameraControlManager {
+/**
+ * Android 4.4以下の古い実装に対応したコントロールマネージャ
+ */
+public class LegacyCameraControlManager extends CameraControlManager {
     CameraSurface mPreviewSurface;
 
     CameraPreviewRequest mPreviewRequest;
@@ -41,7 +41,7 @@ class CameraLegacyManagerImpl extends CameraControlManager {
 
     final Object lock = new Object();
 
-    CameraLegacyManagerImpl(Context context, CameraConnectRequest request) {
+    LegacyCameraControlManager(Context context, CameraConnectRequest request) {
         super(context, request);
     }
 
@@ -180,7 +180,29 @@ class CameraLegacyManagerImpl extends CameraControlManager {
         }
     }
 
-    private boolean requestAutoFocus() {
+    /**
+     * Legacy実装のカメラを取得する
+     */
+    public Camera getCamera() {
+        return mCamera;
+    }
+
+    /**
+     * オートフォーカスを開始させる。
+     * これは非同期で行う
+     * @return
+     */
+    public void startAutoFocus() {
+        mCamera.cancelAutoFocus();
+        mCamera.autoFocus(null);
+    }
+
+    /**
+     * オートフォーカスを行わせる
+     *
+     * @return 成功した場合true
+     */
+    public boolean requestAutoFocus() {
         Timer timer = new Timer();
         try {
             Holder<Boolean> resultHolder = new Holder<>();
