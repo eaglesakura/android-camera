@@ -221,8 +221,13 @@ public class LegacyCameraControlManager extends CameraControlManager {
      * これは非同期で行う
      */
     public void startAutoFocus() {
-        mCamera.cancelAutoFocus();
-        mCamera.autoFocus(null);
+        try {
+            mCamera.cancelAutoFocus();
+            mCamera.autoFocus(null);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            CameraLog.hardware("AutoFocus failed");
+        }
     }
 
     /**
