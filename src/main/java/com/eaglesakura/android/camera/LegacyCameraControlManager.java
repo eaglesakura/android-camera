@@ -4,6 +4,7 @@ import com.eaglesakura.android.camera.error.CameraAccessFailedException;
 import com.eaglesakura.android.camera.error.CameraException;
 import com.eaglesakura.android.camera.log.CameraLog;
 import com.eaglesakura.android.camera.preview.CameraSurface;
+import com.eaglesakura.android.camera.spec.CaptureSize;
 import com.eaglesakura.android.util.ContextUtil;
 import com.eaglesakura.thread.Holder;
 import com.eaglesakura.util.Timer;
@@ -159,6 +160,16 @@ public class LegacyCameraControlManager extends CameraControlManager {
             mCamera.startPreview();
         } catch (IOException e) {
             throw new CameraAccessFailedException(e);
+        }
+    }
+
+    /**
+     * CameraParamが持つプレビューサイズを取得する
+     */
+    public CaptureSize getRawPreviewSize() {
+        synchronized (lock) {
+            Camera.Size size = mParameters.getPreviewSize();
+            return new CaptureSize(size.width, size.height);
         }
     }
 
