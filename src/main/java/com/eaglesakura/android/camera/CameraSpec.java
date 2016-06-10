@@ -332,13 +332,26 @@ public class CameraSpec {
         throw new CameraSpecNotFoundException(id);
     }
 
-    public static CameraSpec getSpecs(Context context, CameraType type) throws CameraException {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+    public static CameraSpec getSpecs(Context context, CameraApi api, CameraType type) throws CameraException {
+        if (api.equals(CameraApi.Default)) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                api = CameraApi.Camera2;
+            } else {
+                api = CameraApi.Legacy;
+            }
+        }
+
+
+        if (api == CameraApi.Camera2) {
             // Camera2
             return Camera2SpecImpl.getSpecs(context, type);
         } else {
             // Camera1
             return CameraLegacySpecImpl.getSpecs(context, type);
         }
+    }
+
+    public static CameraSpec getSpecs(Context context, CameraType type) throws CameraException {
+        return getSpecs(context, CameraApi.Default, type);
     }
 }

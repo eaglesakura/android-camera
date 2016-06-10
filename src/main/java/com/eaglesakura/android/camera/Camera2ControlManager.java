@@ -110,6 +110,12 @@ public class Camera2ControlManager extends CameraControlManager {
         mCharacteristics = mSpec.getCameraSpec(request.getCameraType());
     }
 
+    @NonNull
+    @Override
+    public CameraApi getSupportApi() {
+        return CameraApi.Camera2;
+    }
+
     @Override
     public boolean connect(@Nullable CameraSurface previewSurface, @Nullable CameraPreviewRequest previewRequest, @Nullable CameraPictureShotRequest shotRequest) throws CameraException {
         AndroidThreadUtil.assertBackgroundThread();

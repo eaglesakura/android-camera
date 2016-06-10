@@ -31,6 +31,12 @@ public abstract class CameraControlManager {
     }
 
     /**
+     * 利用しているAPIを取得する
+     */
+    @NonNull
+    public abstract CameraApi getSupportApi();
+
+    /**
      * 撮影用の設定を指定して接続する
      *
      * @param previewSurface プレビュー用のサーフェイス
@@ -65,23 +71,6 @@ public abstract class CameraControlManager {
      */
     @NonNull
     public abstract PictureData takePicture(@Nullable CameraEnvironmentRequest env) throws CameraException;
-
-    public enum CameraApi {
-        /**
-         * Android 4.4以下の古いAPI
-         */
-        Legacy,
-
-        /**
-         * Camera2 API
-         */
-        Camera2,
-
-        /**
-         * 自動で取得する
-         */
-        Default,
-    }
 
     /**
      * カメラ制御クラスを生成する

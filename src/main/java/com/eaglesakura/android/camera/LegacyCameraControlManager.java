@@ -45,6 +45,12 @@ public class LegacyCameraControlManager extends CameraControlManager {
         super(context, request);
     }
 
+    @NonNull
+    @Override
+    public CameraApi getSupportApi() {
+        return CameraApi.Legacy;
+    }
+
     @Override
     public boolean connect(@Nullable CameraSurface previewSurface, @Nullable CameraPreviewRequest previewRequest, @Nullable CameraPictureShotRequest shotRequest) throws CameraException {
         synchronized (lock) {
@@ -86,7 +92,11 @@ public class LegacyCameraControlManager extends CameraControlManager {
                     e.printStackTrace();
                 }
             }
-            mCamera.release();
+            try {
+                mCamera.release();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             mCamera = null;
         }
     }
@@ -94,9 +104,12 @@ public class LegacyCameraControlManager extends CameraControlManager {
     private void commitCameraParams() {
         try {
             mCamera.setParameters(mParameters);
+        } catch (Exception e) {
+        }
+
+        try {
             mParameters = mCamera.getParameters();
         } catch (Exception e) {
-
         }
     }
 
@@ -165,7 +178,12 @@ public class LegacyCameraControlManager extends CameraControlManager {
     }
 
     private void stopPreviewImpl() throws CameraException {
-        mCamera.stopPreview();
+        try {
+            mCamera.stopPreview();
+            mCamera.setPreviewCallback(null);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         mFlags &= (~FLAG_NOW_PREVIEW);
     }
 
@@ -190,7 +208,6 @@ public class LegacyCameraControlManager extends CameraControlManager {
     /**
      * オートフォーカスを開始させる。
      * これは非同期で行う
-     * @return
      */
     public void startAutoFocus() {
         mCamera.cancelAutoFocus();
