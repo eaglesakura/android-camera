@@ -39,6 +39,15 @@ android {
         targetSdkVersion 24
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
+    
+    lintOptions {
+        disable "DuplicateIds"
+        disable "NewApi"
+        disable "InvalidPackage"
+        disable "ProtectedPermissions"
+        disable "MissingTranslation"
+    }
+
 }
 
 /**
