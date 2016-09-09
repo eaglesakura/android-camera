@@ -85,7 +85,7 @@ dependencies {
         compile "com.eaglesakura:android-thread:1.+"
         compile "com.eaglesakura:android-egl:1.+"
 
-        androidTestCompile 'com.eaglesakura:android-devicetest-support:1.+'
+        androidTestCompile 'com.eaglesakura:android-devicetest-support:2.+'
         testCompile 'com.eaglesakura:android-unittest-support:1.+'
     }
 }
