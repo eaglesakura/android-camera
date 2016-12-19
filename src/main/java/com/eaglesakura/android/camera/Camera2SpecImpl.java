@@ -103,16 +103,42 @@ public class Camera2SpecImpl {
 
     CameraCharacteristics getCameraSpec(CameraType type) throws CameraException {
         try {
+            String autoCameraId = null;
+            CameraCharacteristics autoCharacteristics = null;
             for (String id : mCameraManager.getCameraIdList()) {
                 CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(id);
                 int facing = characteristics.get(CameraCharacteristics.LENS_FACING);
-                if (type == CameraType.Front && facing == CameraCharacteristics.LENS_FACING_FRONT) {
-                    mCameraId = id;
-                    return characteristics;
-                } else if (type == CameraType.Back && facing == CameraCharacteristics.LENS_FACING_BACK) {
-                    mCameraId = id;
-                    return characteristics;
+                if (facing == CameraCharacteristics.LENS_FACING_FRONT) {
+                    if (type == CameraType.Front) {
+                        mCameraId = id;
+                        return characteristics;
+                    } else if (autoCameraId == null) {
+                        autoCameraId = id;
+                        autoCharacteristics = characteristics;
+                    }
+                } else if (facing == CameraCharacteristics.LENS_FACING_BACK) {
+                    if (type == CameraType.Back) {
+                        mCameraId = id;
+                        return characteristics;
+                    } else {
+                        autoCameraId = id;
+                        autoCharacteristics = characteristics;
+                    }
+                } else if (facing == CameraCharacteristics.LENS_FACING_EXTERNAL) {
+                    if (type == CameraType.External) {
+                        mCameraId = id;
+                        return characteristics;
+                    } else if (autoCameraId == null) {
+                        autoCameraId = id;
+                        autoCharacteristics = characteristics;
+                    }
                 }
+            }
+
+            // 自動選択が有効であればそちらを利用する
+            if (autoCameraId != null) {
+                mCameraId = autoCameraId;
+                return autoCharacteristics;
             }
 
 

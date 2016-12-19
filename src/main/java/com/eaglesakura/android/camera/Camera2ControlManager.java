@@ -348,7 +348,9 @@ public class Camera2ControlManager extends CameraControlManager {
     private void stopPreviewImpl() {
         synchronized (this) {
             try {
-                mCaptureSession.stopRepeating();
+                if (mCaptureSession != null) {
+                    mCaptureSession.stopRepeating();
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }

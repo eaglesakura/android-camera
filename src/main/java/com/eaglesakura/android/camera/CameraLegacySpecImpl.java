@@ -52,7 +52,7 @@ class CameraLegacySpecImpl {
 
                 sSpecCache.put(type, spec);
             } catch (Exception e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             } finally {
                 if (camera != null) {
                     try {
@@ -86,6 +86,12 @@ class CameraLegacySpecImpl {
             } else if (type == CameraType.Back && info.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
                 return i;
             }
+        }
+
+        // カメラがあり、かつ自動選択対象であれば適当に返す
+        if (cameras > 0 &&
+                (type == CameraType.External || type == CameraType.Auto)) {
+            return 0;
         }
 
         throw new CameraNotFoundException("Type:" + type);

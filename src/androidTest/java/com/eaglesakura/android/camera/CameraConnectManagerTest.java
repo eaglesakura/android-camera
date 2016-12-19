@@ -6,7 +6,7 @@ import com.eaglesakura.android.camera.preview.OffscreenPreviewSurface;
 import com.eaglesakura.android.camera.spec.CameraType;
 import com.eaglesakura.android.camera.spec.FlashMode;
 import com.eaglesakura.android.camera.spec.WhiteBalance;
-import com.eaglesakura.android.device.external.StorageInfo;
+import com.eaglesakura.android.device.external.Storage;
 import com.eaglesakura.android.devicetest.DeviceTestCase;
 import com.eaglesakura.android.util.ImageUtil;
 import com.eaglesakura.util.Util;
@@ -18,11 +18,6 @@ import android.graphics.SurfaceTexture;
 
 import java.io.File;
 import java.io.FileOutputStream;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 public class CameraConnectManagerTest extends DeviceTestCase {
 
@@ -81,7 +76,7 @@ public class CameraConnectManagerTest extends DeviceTestCase {
             assertEquals(picture.width, shotRequest.getCaptureSize().getWidth());
             assertEquals(picture.height, shotRequest.getCaptureSize().getHeight());
 
-            File outFile = new File(StorageInfo.getExternalStorageRoot(getContext()), "junit/testshot.jpg");
+            File outFile = new File(Storage.getExternalDataStorage(getContext()).getPath(), "junit/testshot.jpg");
             FileOutputStream os = new FileOutputStream(outFile);
             os.write(picture.buffer);
             os.flush();

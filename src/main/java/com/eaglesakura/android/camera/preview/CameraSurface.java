@@ -16,6 +16,10 @@ public class CameraSurface {
         mSurfaceTexture = surfaceTexture;
     }
 
+    public CameraSurface(Surface nativeSurface) {
+        mNativeSurface = nativeSurface;
+    }
+
     @NonNull
     public Surface getNativeSurface(CaptureSize previewSize) {
         if (mSurfaceTexture != null) {
