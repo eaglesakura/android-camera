@@ -4,11 +4,8 @@ import com.eaglesakura.android.camera.log.CameraLog;
 import com.eaglesakura.android.camera.spec.CameraType;
 import com.eaglesakura.android.camera.spec.CaptureSize;
 import com.eaglesakura.android.devicetest.DeviceTestCase;
-import com.eaglesakura.util.StringUtil;
 
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 public class CameraSpecTest extends DeviceTestCase {
 
@@ -29,8 +26,9 @@ public class CameraSpecTest extends DeviceTestCase {
 
             CaptureSize size = specs.getPreviewSize(796, 597);
             CameraLog.hardware("PreviewSize %dx%d", size.getWidth(), size.getHeight());
-            assertThat(StringUtil.format("%d < 1400", size.getWidth()), size.getWidth() < 1400, isTrue());
-            assertThat(StringUtil.format("%d < 1400", size.getHeight()), size.getHeight() < 1400, isTrue());
+
+            validate(size.getWidth()).to(1400);
+            validate(size.getHeight()).to(1400);
 
             {
                 CaptureSize minimumPreviewSize = specs.getMinimumPreviewSize();

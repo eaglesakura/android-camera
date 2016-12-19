@@ -10,7 +10,6 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.os.Build;
-import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 
 import static android.opengl.GLES20.glDeleteTextures;
@@ -53,7 +52,10 @@ public class OffscreenPreviewSurface {
 
         // EGL初期化する
         EGLSpecRequest eglSpecRequest = new EGLSpecRequest();
-        eglSpecRequest.version = GLESVersion.GLES20;
+        eglSpecRequest.version = GLESVersion.GLES11;
+        eglSpecRequest.surfaceColor = null; // 色指定なし
+        eglSpecRequest.surfaceDepthBits = 0;    // 深度ビット不要
+        eglSpecRequest.surfaceStencilBits = 0;  // ステンシルビット不要
         mEglManager.initialize(eglSpecRequest);
         mEglDevice = mEglManager.newDevice(null);
         mEglDevice.createPBufferSurface(getRequestPreviewWidth(), getRequestPreviewHeight());
