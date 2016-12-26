@@ -403,13 +403,15 @@ public class Camera2ControlManager extends CameraControlManager {
     }
 
     PictureData takePictureImpl(@Nullable CameraEnvironmentRequest env) throws CameraException {
-        if (!isPreviewNow()) {
+        if (mPreviewRequest != null && !isPreviewNow()) {
             throw new IllegalStateException("Preview not started");
         }
 
         CameraCaptureSession session = getSession();
         try {
-            startPreCapture(session, mPreviewSurface.getNativeSurface(mPreviewRequest.getPreviewSize()), env);
+            if (mPreviewRequest != null) {
+                startPreCapture(session, mPreviewSurface.getNativeSurface(mPreviewRequest.getPreviewSize()), env);
+            }
 
             Holder<CameraException> errorHolder = new Holder<>();
             Holder<PictureData> resultHolder = new Holder<>();
