@@ -9,7 +9,7 @@ import com.eaglesakura.android.camera.preview.CameraSurface;
 import com.eaglesakura.android.camera.spec.CameraType;
 import com.eaglesakura.android.camera.spec.CaptureFormat;
 import com.eaglesakura.android.camera.spec.FocusMode;
-import com.eaglesakura.android.thread.async.AsyncHandler;
+import com.eaglesakura.android.thread.AsyncHandler;
 import com.eaglesakura.android.util.AndroidThreadUtil;
 import com.eaglesakura.android.util.ContextUtil;
 import com.eaglesakura.thread.Holder;

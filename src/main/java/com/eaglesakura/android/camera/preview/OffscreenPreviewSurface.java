@@ -1,10 +1,10 @@
 package com.eaglesakura.android.camera.preview;
 
 import com.eaglesakura.android.camera.spec.CaptureSize;
-import com.eaglesakura.android.glkit.egl.EGLSpecRequest;
-import com.eaglesakura.android.glkit.egl.GLESVersion;
-import com.eaglesakura.android.glkit.egl.IEGLDevice;
-import com.eaglesakura.android.glkit.egl11.EGL11Manager;
+import com.eaglesakura.android.device.egl.EGLSpecRequest;
+import com.eaglesakura.android.device.egl.GLESVersion;
+import com.eaglesakura.android.device.egl.IEGLDevice;
+import com.eaglesakura.android.device.egl.egl11.EGL11Manager;
 
 import android.annotation.TargetApi;
 import android.content.Context;
