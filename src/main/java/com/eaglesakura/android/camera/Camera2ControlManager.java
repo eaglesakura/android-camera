@@ -148,9 +148,16 @@ public class Camera2ControlManager extends CameraControlManager {
 
                     @Override
                     public void onError(CameraDevice camera, int error) {
-                        errorHolder.set(new CameraSecurityException("Error :: " + error));
-                        camera.close();
-                        mCamera = null;
+                        CameraLog.hardware("onError[%s(%d)]", camera.getId(), error);
+
+                        if (error == ERROR_CAMERA_IN_USE) {
+                            // すでに使われている
+                            cameraDeviceHolder.set(camera);
+                        } else {
+                            errorHolder.set(new CameraSecurityException("Error :: " + error));
+                            camera.close();
+                            mCamera = null;
+                        }
                     }
                 }, mControlHandler);
 
@@ -244,6 +251,9 @@ public class Camera2ControlManager extends CameraControlManager {
     }
 
     private CaptureRequest.Builder newCaptureRequest(CameraEnvironmentRequest env, int template) throws CameraAccessException {
+        if (mCamera == null) {
+            throw new CameraAccessException(CameraAccessException.CAMERA_ERROR, "Camera is Null(2)");
+        }
         CaptureRequest.Builder request = mCamera.createCaptureRequest(template);
 
         if (env != null) {
@@ -295,6 +305,9 @@ public class Camera2ControlManager extends CameraControlManager {
 
         Holder<CameraException> errorHolder = new Holder<>();
         Holder<CameraCaptureSession> sessionHolder = new Holder<>();
+        if (mCamera == null) {
+            throw new CameraAccessFailedException("Camera is Null(1)");
+        }
 
         try {
             mCamera.createCaptureSession(surfaces, new CameraCaptureSession.StateCallback() {
