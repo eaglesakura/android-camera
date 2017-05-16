@@ -267,9 +267,13 @@ public class Camera2ControlManager extends CameraControlManager {
                     // https://developer.android.com/reference/android/hardware/camera2/CameraCharacteristics.html
                     // LEGACY devices will support OFF mode only if they support focusing to infinity (by also setting android.lens.focusDistance to 0.0f).
                     request.set(CaptureRequest.LENS_FOCUS_DISTANCE, 0.0f);
-                }
+                } else if (mode == FocusMode.SETTING_AUTO) {
+                    request.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+                    request.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
 
-                request.set(CaptureRequest.CONTROL_AF_MODE, Camera2SpecImpl.toAeModeInt(mode));
+                } else {
+                    request.set(CaptureRequest.CONTROL_AF_MODE, Camera2SpecImpl.toAeModeInt(mode));
+                }
             }
 
             if (env.getScene() != null) {
@@ -380,6 +384,11 @@ public class Camera2ControlManager extends CameraControlManager {
         });
     }
 
+    /**
+     * 撮影前の事前AF/AEを行う。
+     *
+     * これは端末ごとの互換性を保つために行っている。
+     */
     private void startPreCapture(CameraCaptureSession session, Surface imageSurface, @Nullable CameraEnvironmentRequest env) throws CameraException, CameraAccessException {
         CaptureRequest.Builder builder = newCaptureRequest(env, CameraDevice.TEMPLATE_PREVIEW);
         builder.addTarget(imageSurface);
@@ -423,6 +432,7 @@ public class Camera2ControlManager extends CameraControlManager {
         CameraCaptureSession session = getSession();
         try {
             if (mPreviewRequest != null) {
+                // この処理はおそらく必要ないと思われる
                 startPreCapture(session, mPreviewSurface.getNativeSurface(mPreviewRequest.getPreviewSize()), env);
             }
 
@@ -466,6 +476,10 @@ public class Camera2ControlManager extends CameraControlManager {
                 builder.set(CaptureRequest.JPEG_GPS_LOCATION, loc);
             }
 
+            if (env.getFocusMode().equals(FocusMode.SETTING_AUTO)) {
+                builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+                builder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+            }
             builder.addTarget(mImageReader.getSurface());
             session.stopRepeating();
             session.capture(builder.build(), captureCallback, mControlHandler);
