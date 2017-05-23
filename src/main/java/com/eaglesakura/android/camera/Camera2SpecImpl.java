@@ -3,6 +3,7 @@ package com.eaglesakura.android.camera;
 import com.eaglesakura.android.camera.error.CameraAccessFailedException;
 import com.eaglesakura.android.camera.error.CameraException;
 import com.eaglesakura.android.camera.error.CameraNotFoundException;
+import com.eaglesakura.android.camera.log.CameraLog;
 import com.eaglesakura.android.camera.spec.CameraType;
 import com.eaglesakura.android.camera.spec.CaptureFormat;
 import com.eaglesakura.android.camera.spec.CaptureSize;
@@ -59,6 +60,7 @@ public class Camera2SpecImpl {
         sFocusModeMap.put(FocusMode.SETTING_INFINITY, CameraCharacteristics.CONTROL_AF_MODE_OFF);
 
 
+        sSceneModeMap.put(Scene.SETTING_OFF, CameraCharacteristics.CONTROL_MODE_OFF);
         sSceneModeMap.put(Scene.SETTING_AUTO, CameraCharacteristics.CONTROL_MODE_AUTO);
         sSceneModeMap.put(Scene.SETTING_PORTRAIT, CameraCharacteristics.CONTROL_SCENE_MODE_PORTRAIT);
         sSceneModeMap.put(Scene.SETTING_LANDSCAPE, CameraCharacteristics.CONTROL_SCENE_MODE_LANDSCAPE);
@@ -218,6 +220,8 @@ public class Camera2SpecImpl {
             Scene value = CollectionUtil.findKeyFromValue(sSceneModeMap, mode);
             if (value != null) {
                 result.add(value);
+            } else {
+                CameraLog.hardware("Not Supported scene[%d][0x%x]", mode, mode);
             }
         }
 

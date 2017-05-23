@@ -23,6 +23,11 @@ public final class Scene {
     private static final Map<String, Scene> gSceneSpecMap;
 
     /**
+     * モードなし
+     */
+    public final static Scene SETTING_OFF;
+
+    /**
      * 自動設定
      */
     public final static Scene SETTING_AUTO;
@@ -78,6 +83,7 @@ public final class Scene {
 
     static {
         gSceneSpecMap = new HashMap<>();
+        SETTING_OFF = fromName("off");
         SETTING_AUTO = fromName("auto");
         SETTING_PORTRAIT = fromName("portrait");
         SETTING_LANDSCAPE = fromName("landscape");

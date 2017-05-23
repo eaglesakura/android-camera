@@ -27,8 +27,8 @@ public class CameraSpecTest extends DeviceTestCase {
             CaptureSize size = specs.getPreviewSize(796, 597);
             CameraLog.hardware("PreviewSize %dx%d", size.getWidth(), size.getHeight());
 
-            validate(size.getWidth()).to(1400);
-            validate(size.getHeight()).to(1400);
+            validate(size.getWidth()).to(2000);
+            validate(size.getHeight()).to(2000);
 
             {
                 CaptureSize minimumPreviewSize = specs.getMinimumPreviewSize();
