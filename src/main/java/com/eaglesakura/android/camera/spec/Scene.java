@@ -81,6 +81,18 @@ public final class Scene {
      */
     public final static Scene SETTING_DOCUMENT;
 
+    public final static Scene SETTING_SUNSET;
+
+    public final static Scene SETTING_STEADYPHOTO;
+
+    public final static Scene SETTING_FIREWORKS;
+
+    public final static Scene SETTING_CANDLELIGHT;
+
+    public final static Scene SETTING_THEATRE;
+
+    public final static Scene SETTING_ACTION;
+
     static {
         gSceneSpecMap = new HashMap<>();
         SETTING_OFF = fromName("off");
@@ -94,6 +106,12 @@ public final class Scene {
         SETTING_SPORTS = fromName("sports");
         SETTING_PARTY = fromName("party");
         SETTING_DOCUMENT = fromName("document");
+        SETTING_SUNSET = fromName("sunset");
+        SETTING_STEADYPHOTO = fromName("steadyphoto");
+        SETTING_FIREWORKS = fromName("fireworks");
+        SETTING_CANDLELIGHT = fromName("candlelight");
+        SETTING_THEATRE = fromName("theatre");
+        SETTING_ACTION = fromName("action");
     }
 
     Scene(String apiSettingName) {

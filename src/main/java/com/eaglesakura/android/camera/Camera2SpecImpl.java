@@ -72,6 +72,13 @@ public class Camera2SpecImpl {
         sSceneModeMap.put(Scene.SETTING_PARTY, CameraCharacteristics.CONTROL_SCENE_MODE_PARTY);
         sSceneModeMap.put(Scene.SETTING_DOCUMENT, CameraCharacteristics.CONTROL_SCENE_MODE_BARCODE);
 
+        sSceneModeMap.put(Scene.SETTING_SUNSET, CameraCharacteristics.CONTROL_SCENE_MODE_SUNSET);
+        sSceneModeMap.put(Scene.SETTING_STEADYPHOTO, CameraCharacteristics.CONTROL_SCENE_MODE_STEADYPHOTO);
+        sSceneModeMap.put(Scene.SETTING_FIREWORKS, CameraCharacteristics.CONTROL_SCENE_MODE_FIREWORKS);
+        sSceneModeMap.put(Scene.SETTING_CANDLELIGHT, CameraCharacteristics.CONTROL_SCENE_MODE_CANDLELIGHT);
+        sSceneModeMap.put(Scene.SETTING_THEATRE, CameraCharacteristics.CONTROL_SCENE_MODE_THEATRE);
+        sSceneModeMap.put(Scene.SETTING_ACTION, CameraCharacteristics.CONTROL_SCENE_MODE_ACTION);
+
         sWhiteBalanceMap.put(WhiteBalance.SETTING_AUTO, CameraCharacteristics.CONTROL_AWB_MODE_AUTO);
         sWhiteBalanceMap.put(WhiteBalance.SETTING_INCANDESCENT, CameraCharacteristics.CONTROL_AWB_MODE_INCANDESCENT);
         sWhiteBalanceMap.put(WhiteBalance.SETTING_FLUORESCENT, CameraCharacteristics.CONTROL_AWB_MODE_FLUORESCENT);
