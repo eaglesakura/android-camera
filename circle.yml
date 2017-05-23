@@ -21,7 +21,7 @@ test:
     - echo "skip localtest"
 deployment:
   canary:
-    branch: /^v[0-9]\..*$/
+    tag: /^v[0-9]\..*$/
     commands:
       - ./gradlew bintrayUpload
   develop:

@@ -13,6 +13,7 @@ import com.eaglesakura.android.thread.AsyncHandler;
 import com.eaglesakura.android.util.AndroidThreadUtil;
 import com.eaglesakura.android.util.ContextUtil;
 import com.eaglesakura.thread.Holder;
+import com.eaglesakura.util.StringUtil;
 import com.eaglesakura.util.Util;
 
 import android.annotation.TargetApi;
@@ -449,7 +450,7 @@ public class Camera2ControlManager extends CameraControlManager {
 
                 @Override
                 public void onCaptureFailed(CameraCaptureSession session, CaptureRequest request, CaptureFailure failure) {
-                    errorHolder.set(new PictureFailedException("Fail :: " + failure.getReason()));
+                    errorHolder.set(new PictureFailedException(StringUtil.format("Fail reason[%d]", failure.getReason())));
                 }
             };
 
@@ -476,7 +477,7 @@ public class Camera2ControlManager extends CameraControlManager {
                 builder.set(CaptureRequest.JPEG_GPS_LOCATION, loc);
             }
 
-            if (env.getFocusMode().equals(FocusMode.SETTING_AUTO)) {
+            if (FocusMode.SETTING_AUTO.equals(env.getFocusMode())) {
                 builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
                 builder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
             }
