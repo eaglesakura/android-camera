@@ -20,8 +20,12 @@ test:
 #    - sh -c "$(curl -fsSL https://raw.githubusercontent.com/eaglesakura/build-dependencies/master/circleci/build-test.sh)"
     - echo "skip localtest"
 deployment:
-  canary:
+  release:
     tag: /^v[0-9]\..*$/
+    commands:
+      - ./gradlew bintrayUpload
+  snapshot:
+    branch: /^v[0-9]\..*$/
     commands:
       - ./gradlew bintrayUpload
   develop:
