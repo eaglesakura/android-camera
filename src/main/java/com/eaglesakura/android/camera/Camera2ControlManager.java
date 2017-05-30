@@ -13,7 +13,6 @@ import com.eaglesakura.android.thread.AsyncHandler;
 import com.eaglesakura.android.util.AndroidThreadUtil;
 import com.eaglesakura.android.util.ContextUtil;
 import com.eaglesakura.thread.Holder;
-import com.eaglesakura.util.StringUtil;
 import com.eaglesakura.util.Util;
 
 import android.annotation.TargetApi;
@@ -23,6 +22,7 @@ import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
@@ -109,6 +109,23 @@ public class Camera2ControlManager extends CameraControlManager {
         super(context, request);
         mSpec = new Camera2SpecImpl(context);
         mCharacteristics = mSpec.getCameraSpec(request.getCameraType());
+    }
+
+    /**
+     * カメラのセンサーの向きを取得する。
+     */
+    @Override
+    public int getCameraSensorOrientation() {
+        if ( mCamera != null && mSpec != null ) {
+            try {
+                CameraCharacteristics c = mSpec.getCameraManager().getCameraCharacteristics(mCamera.getId());
+                return c.get(CameraCharacteristics.SENSOR_ORIENTATION);
+
+            } catch ( CameraAccessException e ) {
+                // 握りつぶす
+            }
+        }
+        return 0;
     }
 
     @NonNull
@@ -433,8 +450,8 @@ public class Camera2ControlManager extends CameraControlManager {
         CameraCaptureSession session = getSession();
         try {
             if (mPreviewRequest != null) {
-                // この処理はおそらく必要ないと思われる
-                startPreCapture(session, mPreviewSurface.getNativeSurface(mPreviewRequest.getPreviewSize()), env);
+                // AFがかからないことがあるためコメント
+                // startPreCapture(session, mPreviewSurface.getNativeSurface(mPreviewRequest.getPreviewSize()), env);
             }
 
             Holder<CameraException> errorHolder = new Holder<>();
@@ -467,7 +484,8 @@ public class Camera2ControlManager extends CameraControlManager {
             }, mProcessingHandler);
 
             CaptureRequest.Builder builder = newCaptureRequest(env, CameraDevice.TEMPLATE_STILL_CAPTURE);
-            builder.set(CaptureRequest.JPEG_ORIENTATION, getJpegOrientation());
+            // memo: アプリ側でJPEGの回転角を決定するため削除
+            //builder.set(CaptureRequest.JPEG_ORIENTATION, getJpegOrientation());
 
             // Lat/Lng
             if (mPictureShotRequest.hasLocation()) {

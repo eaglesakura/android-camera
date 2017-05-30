@@ -46,6 +46,11 @@ public class LegacyCameraControlManager extends CameraControlManager {
         super(context, request);
     }
 
+    @Override
+    public int getCameraSensorOrientation() {
+        return 0;
+    }
+
     @NonNull
     @Override
     public CameraApi getSupportApi() {
