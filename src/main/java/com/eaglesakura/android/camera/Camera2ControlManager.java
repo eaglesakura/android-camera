@@ -116,12 +116,12 @@ public class Camera2ControlManager extends CameraControlManager {
      */
     @Override
     public int getCameraSensorOrientation() {
-        if ( mCamera != null && mSpec != null ) {
+        if (mCamera != null && mSpec != null) {
             try {
                 CameraCharacteristics c = mSpec.getCameraManager().getCameraCharacteristics(mCamera.getId());
                 return c.get(CameraCharacteristics.SENSOR_ORIENTATION);
 
-            } catch ( CameraAccessException e ) {
+            } catch (CameraAccessException e) {
                 // 握りつぶす
             }
         }
@@ -484,8 +484,7 @@ public class Camera2ControlManager extends CameraControlManager {
             }, mProcessingHandler);
 
             CaptureRequest.Builder builder = newCaptureRequest(env, CameraDevice.TEMPLATE_STILL_CAPTURE);
-            // memo: アプリ側でJPEGの回転角を決定するため削除
-            //builder.set(CaptureRequest.JPEG_ORIENTATION, getJpegOrientation());
+            builder.set(CaptureRequest.JPEG_ORIENTATION, getJpegOrientation());
 
             // Lat/Lng
             if (mPictureShotRequest.hasLocation()) {
