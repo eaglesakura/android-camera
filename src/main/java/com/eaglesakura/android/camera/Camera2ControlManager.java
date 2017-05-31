@@ -433,8 +433,8 @@ public class Camera2ControlManager extends CameraControlManager {
         CameraCaptureSession session = getSession();
         try {
             if (mPreviewRequest != null) {
-                // この処理はおそらく必要ないと思われる
-                startPreCapture(session, mPreviewSurface.getNativeSurface(mPreviewRequest.getPreviewSize()), env);
+                // AFがかからない端末があるためcomment
+                // startPreCapture(session, mPreviewSurface.getNativeSurface(mPreviewRequest.getPreviewSize()), env);
             }
 
             Holder<CameraException> errorHolder = new Holder<>();
