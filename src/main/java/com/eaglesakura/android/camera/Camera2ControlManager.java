@@ -13,7 +13,6 @@ import com.eaglesakura.android.thread.AsyncHandler;
 import com.eaglesakura.android.util.AndroidThreadUtil;
 import com.eaglesakura.android.util.ContextUtil;
 import com.eaglesakura.thread.Holder;
-import com.eaglesakura.util.StringUtil;
 import com.eaglesakura.util.Util;
 
 import android.annotation.TargetApi;
@@ -23,6 +22,7 @@ import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
@@ -34,6 +34,7 @@ import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.Surface;
+import android.view.WindowManager;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -109,6 +110,23 @@ public class Camera2ControlManager extends CameraControlManager {
         super(context, request);
         mSpec = new Camera2SpecImpl(context);
         mCharacteristics = mSpec.getCameraSpec(request.getCameraType());
+    }
+
+    /**
+     * カメラのセンサーの向きを取得する。
+     */
+    @Override
+    public int getCameraSensorOrientation() {
+        if (mCamera != null && mSpec != null) {
+            try {
+                CameraCharacteristics c = mSpec.getCameraManager().getCameraCharacteristics(mCamera.getId());
+                return c.get(CameraCharacteristics.SENSOR_ORIENTATION);
+
+            } catch (CameraAccessException e) {
+                // 握りつぶす
+            }
+        }
+        return 0;
     }
 
     @NonNull
@@ -240,15 +258,30 @@ public class Camera2ControlManager extends CameraControlManager {
     }
 
     private int getJpegOrientation() {
-        int sensorOrientation = mCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
-        int deviceRotateDegree = ContextUtil.getDeviceRotateDegree(mContext);
+        int sensorOrientation = getCameraSensorOrientation();
 
-        if (mConnectRequest.getCameraType() == CameraType.Back) {
-            deviceRotateDegree = (360 - sensorOrientation + deviceRotateDegree) % 360;
-        } else {
-            deviceRotateDegree = (sensorOrientation + deviceRotateDegree + 360) % 360;
+        WindowManager wm = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
+        int calcRotation = 0;
+        switch (wm.getDefaultDisplay().getRotation()) {
+            case Surface.ROTATION_0:
+                calcRotation = 90;
+                break;
+            case Surface.ROTATION_180:
+                calcRotation = 270;
+                break;
+            case Surface.ROTATION_270:
+                calcRotation = 180;
+                break;
+            case Surface.ROTATION_90:
+            default:
+                break;
         }
-        return deviceRotateDegree;
+        if (mConnectRequest.getCameraType() == CameraType.Back) {
+            return (calcRotation + sensorOrientation + 270) % 360;
+
+        } else {
+            return (sensorOrientation + ContextUtil.getDeviceRotateDegree(mContext) + 360) % 360;
+        }
     }
 
     private CaptureRequest.Builder newCaptureRequest(CameraEnvironmentRequest env, int template) throws CameraAccessException {

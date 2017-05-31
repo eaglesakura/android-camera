@@ -31,6 +31,11 @@ public abstract class CameraControlManager {
     }
 
     /**
+     * カメラのセンサー角度を取得する
+     */
+    public abstract int getCameraSensorOrientation();
+
+    /**
      * 利用しているAPIを取得する
      */
     @NonNull
