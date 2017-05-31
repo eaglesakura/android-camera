@@ -450,8 +450,8 @@ public class Camera2ControlManager extends CameraControlManager {
         CameraCaptureSession session = getSession();
         try {
             if (mPreviewRequest != null) {
-                // AFがかからないことがあるためコメント
-                // startPreCapture(session, mPreviewSurface.getNativeSurface(mPreviewRequest.getPreviewSize()), env);
+                // この処理はおそらく必要ないと思われる
+                startPreCapture(session, mPreviewSurface.getNativeSurface(mPreviewRequest.getPreviewSize()), env);
             }
 
             Holder<CameraException> errorHolder = new Holder<>();
@@ -484,7 +484,8 @@ public class Camera2ControlManager extends CameraControlManager {
             }, mProcessingHandler);
 
             CaptureRequest.Builder builder = newCaptureRequest(env, CameraDevice.TEMPLATE_STILL_CAPTURE);
-            builder.set(CaptureRequest.JPEG_ORIENTATION, getJpegOrientation());
+            // memo: アプリ側でJPEGの回転角を決定するため削除
+            //builder.set(CaptureRequest.JPEG_ORIENTATION, getJpegOrientation());
 
             // Lat/Lng
             if (mPictureShotRequest.hasLocation()) {
