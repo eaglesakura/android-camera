@@ -276,7 +276,12 @@ public class Camera2ControlManager extends CameraControlManager {
             default:
                 break;
         }
-        return (calcRotation + sensorOrientation + 270) % 360;
+        if (mConnectRequest.getCameraType() == CameraType.Back) {
+            return (calcRotation + sensorOrientation + 270) % 360;
+
+        } else {
+            return (sensorOrientation + ContextUtil.getDeviceRotateDegree(mContext) + 360) % 360;
+        }
     }
 
     private CaptureRequest.Builder newCaptureRequest(CameraEnvironmentRequest env, int template) throws CameraAccessException {
