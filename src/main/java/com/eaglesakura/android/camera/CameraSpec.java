@@ -2,6 +2,7 @@ package com.eaglesakura.android.camera;
 
 import com.eaglesakura.android.camera.error.CameraException;
 import com.eaglesakura.android.camera.error.CameraSpecNotFoundException;
+import com.eaglesakura.android.camera.log.CameraLog;
 import com.eaglesakura.android.camera.spec.CameraType;
 import com.eaglesakura.android.camera.spec.FlashMode;
 import com.eaglesakura.android.camera.spec.FocusMode;
@@ -258,37 +259,28 @@ public class CameraSpec {
 
     private CaptureSize chooseShotSize(List<CaptureSize> targetSizes, int width, int height, int minWidth, int minHeight) {
 
-        final float reqLargeValue = Math.max(width, height);
-        final float reqSmallValue = Math.min(width, height);
-        final float lowerSizeLarge = Math.max(minWidth, minHeight);
-        final float lowerSizeSmall = Math.min(minWidth, minHeight);
+//        final float reqLargeValue = Math.max(width, height);
+//        final float reqSmallValue = Math.min(width, height);
+        final int requestLong = Math.max(minWidth, minHeight);
+        final int requestShort = Math.min(minWidth, minHeight);
 
-        final float TARGET_ASPECT = Math.max(1, reqLargeValue) / Math.max(1, reqSmallValue);
+//        final float TARGET_ASPECT = Math.max(1, reqLargeValue) / Math.max(1, reqSmallValue);
 
         CaptureSize target = targetSizes.get(0);
-        try {
-            float current_diff = 999999999;
 
-            for (CaptureSize size : targetSizes) {
-                final float checkLargeValue = Math.max(size.getWidth(), size.getHeight());
-                final float checkSmallValue = Math.min(size.getWidth(), size.getHeight());
+        // 逆方向（プレビューサイズの小さいもの）から、最低限の要件を満たすアイテムを探しておく
+        for (int index = targetSizes.size() - 1; index >= 0; --index) {
 
-                // 最低限のサイズは保つ
-                if (checkLargeValue >= lowerSizeLarge && checkSmallValue >= lowerSizeSmall) {
-                    float aspect_diff = (checkLargeValue / checkSmallValue) - TARGET_ASPECT;
 
-                    // アスペクト比の差分が小さい＝近い構成をコピーする
-                    // 基本的に奥へ行くほど解像度が低いため、最低限の要求を満たせる解像度を探す
-                    if (Math.abs(aspect_diff) <= current_diff) {
-                        target = size;
-                        current_diff = aspect_diff;
-                    }
-                }
+            CaptureSize size = targetSizes.get(index);
+
+            int captureLong = Math.max(size.getWidth(), size.getHeight());
+            int captureShort = Math.min(size.getWidth(), size.getHeight());
+            if (captureLong >= requestLong && captureShort >= requestShort) {
+                CameraLog.hardware("Choose PreviewSize [%d x %d] Req[%d x %d]", captureLong, captureShort, requestLong, requestShort);
+                return size;
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
-
         return target;
     }
 

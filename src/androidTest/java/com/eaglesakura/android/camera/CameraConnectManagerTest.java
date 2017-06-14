@@ -75,7 +75,7 @@ public class CameraConnectManagerTest extends DeviceTestCase {
             assertEquals(picture.width, shotRequest.getCaptureSize().getWidth());
             assertEquals(picture.height, shotRequest.getCaptureSize().getHeight());
 
-            File outFile = new File(getCacheDirectory(), StringUtil.format("shot/%d-%s.jpg", System.currentTimeMillis(), spec.getType().name()));
+            File outFile = new File(getTestContext().getExternalFilesDir(null), StringUtil.format("shot/%d-%s.jpg", System.currentTimeMillis(), spec.getType().name()));
             outFile.getParentFile().mkdirs();
             FileOutputStream os = new FileOutputStream(outFile);
             os.write(picture.buffer);

@@ -242,13 +242,18 @@ public class Camera2ControlManager extends CameraControlManager {
     private int getJpegOrientation() {
         int sensorOrientation = mCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
         int deviceRotateDegree = ContextUtil.getDeviceRotateDegree(mContext);
+        int jpegOrientation;
 
+        // (360 * 2)を加算しているのは、最大で-270-270の角度を正の値に補正するためである
         if (mConnectRequest.getCameraType() == CameraType.Back) {
-            deviceRotateDegree = (360 - sensorOrientation + deviceRotateDegree) % 360;
+//            jpegOrientation = (sensorOrientation + deviceRotateDegree + (360 * 2)) % 360;
+            jpegOrientation = ((180 - (sensorOrientation + deviceRotateDegree)) + (360 * 2)) % 360;
         } else {
-            deviceRotateDegree = (sensorOrientation + deviceRotateDegree + 360) % 360;
+            jpegOrientation = (sensorOrientation + deviceRotateDegree + (360 * 2)) % 360;
         }
-        return deviceRotateDegree;
+
+        CameraLog.hardware("Camera[%s] Orientation sensor[deg %d] device[deg %d] Jpeg[deg %d]", mConnectRequest.getCameraType().name(), sensorOrientation, deviceRotateDegree, jpegOrientation);
+        return jpegOrientation;
     }
 
     private CaptureRequest.Builder newCaptureRequest(CameraEnvironmentRequest env, int template) throws CameraAccessException {
@@ -433,7 +438,8 @@ public class Camera2ControlManager extends CameraControlManager {
         CameraCaptureSession session = getSession();
         try {
             if (mPreviewRequest != null) {
-                // この処理はおそらく必要ないと思われる
+                // 環境光等の事前セットアップを行う
+                // これを行わない場合、例えば室内であれば撮影内容が暗くなる等の副作用が出る
                 startPreCapture(session, mPreviewSurface.getNativeSurface(mPreviewRequest.getPreviewSize()), env);
             }
 
