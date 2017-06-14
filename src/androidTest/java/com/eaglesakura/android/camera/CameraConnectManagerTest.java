@@ -7,7 +7,10 @@ import com.eaglesakura.android.camera.spec.CameraType;
 import com.eaglesakura.android.camera.spec.FlashMode;
 import com.eaglesakura.android.camera.spec.WhiteBalance;
 import com.eaglesakura.android.devicetest.DeviceTestCase;
+import com.eaglesakura.android.util.ContextUtil;
 import com.eaglesakura.android.util.ImageUtil;
+import com.eaglesakura.util.RandomUtil;
+import com.eaglesakura.util.StringUtil;
 import com.eaglesakura.util.Util;
 
 import org.junit.Test;
@@ -47,10 +50,7 @@ public class CameraConnectManagerTest extends DeviceTestCase {
         }
     }
 
-    @Test
-    public void 撮影を行う() throws Throwable {
-        CameraSpec spec = CameraSpec.getSpecs(getContext(), CameraType.Front);
-
+    void testShot(CameraSpec spec) throws Throwable {
         CameraPreviewRequest previewRequest = new CameraPreviewRequest().size(spec.getPreviewSize(640, 480));
         CameraConnectRequest connectRequest = new CameraConnectRequest(spec.getType());
         CameraEnvironmentRequest envRequest = new CameraEnvironmentRequest().flash(FlashMode.SETTING_OFF);
@@ -75,7 +75,7 @@ public class CameraConnectManagerTest extends DeviceTestCase {
             assertEquals(picture.width, shotRequest.getCaptureSize().getWidth());
             assertEquals(picture.height, shotRequest.getCaptureSize().getHeight());
 
-            File outFile = new File(getCacheDirectory(), "shot/testshot.jpg");
+            File outFile = new File(getCacheDirectory(), StringUtil.format("shot/%d-%s.jpg", System.currentTimeMillis(), spec.getType().name()));
             outFile.getParentFile().mkdirs();
             FileOutputStream os = new FileOutputStream(outFile);
             os.write(picture.buffer);
@@ -96,5 +96,11 @@ public class CameraConnectManagerTest extends DeviceTestCase {
 
             assertFalse(cameraManager.isConnected());
         }
+    }
+
+    @Test
+    public void 撮影を行う() throws Throwable {
+        testShot(CameraSpec.getSpecs(getContext(), CameraType.Front));
+        testShot(CameraSpec.getSpecs(getContext(), CameraType.Back));
     }
 }
