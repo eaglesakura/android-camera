@@ -57,9 +57,6 @@ android {
 //        disable "InvalidPackage"
 //        disable "ProtectedPermissions"
 //        disable "MissingTranslation"
-
-        // FIXME: abortOnError
-//        abortOnError false
     }
 
 }
