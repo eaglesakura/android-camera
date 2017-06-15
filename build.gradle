@@ -37,8 +37,8 @@ group = "com.eaglesakura"
 version = ARTIFACT_VERSION + getArtifactVersionSuffix()
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion "25.0.2"
+    compileSdkVersion 26
+    buildToolsVersion "26.0.0"
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -47,19 +47,19 @@ android {
 
     defaultConfig {
         minSdkVersion 15
-        targetSdkVersion 25
+        targetSdkVersion 26
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
     lintOptions {
-        disable "DuplicateIds"
-        disable "NewApi"
-        disable "InvalidPackage"
-        disable "ProtectedPermissions"
-        disable "MissingTranslation"
+//        disable "DuplicateIds"
+//        disable "NewApi"
+//        disable "InvalidPackage"
+//        disable "ProtectedPermissions"
+//        disable "MissingTranslation"
 
         // FIXME: abortOnError
-        abortOnError false
+//        abortOnError false
     }
 
 }
