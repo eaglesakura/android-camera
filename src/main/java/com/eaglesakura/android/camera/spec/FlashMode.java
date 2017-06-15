@@ -50,10 +50,20 @@ public class FlashMode {
      */
     private final String mName;
 
+    private final boolean mPermitFlash;
+
     FlashMode(String apiSettingName) {
         this.mName = apiSettingName;
+        if (apiSettingName.toLowerCase().equals("off")) {
+            mPermitFlash = false;
+        } else {
+            mPermitFlash = true;
+        }
     }
 
+    public boolean isPermitFlash() {
+        return mPermitFlash;
+    }
 
     public String getRawName() {
         return mName;

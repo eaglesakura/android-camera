@@ -269,7 +269,7 @@ public class Camera2SpecImpl {
         return sSceneModeMap.get(scene);
     }
 
-    static int toAeModeInt(FocusMode mode) {
+    static int toAfModeInt(FocusMode mode) {
         return sFocusModeMap.get(mode);
     }
 
