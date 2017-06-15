@@ -359,10 +359,7 @@ public class Camera2ControlManager extends CameraControlManager {
             // プレビューを開始する
             if (mPreviewCaptureRequest == null) {
                 CaptureRequest.Builder builder = newCaptureRequest(env, CameraDevice.TEMPLATE_PREVIEW);
-
-//                builder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
                 builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
-
                 builder.addTarget(mPreviewSurface.getNativeSurface(mPreviewRequest.getPreviewSize()));
                 mPreviewCaptureRequest = builder;
             }
@@ -421,64 +418,6 @@ public class Camera2ControlManager extends CameraControlManager {
         });
     }
 
-    /**
-     * 撮影前の事前AF/AEを行う。
-     *
-     * これは端末ごとの互換性を保つために行っている。
-     * また、PreCapture無しで撮影を行うと環境光等の状態により撮影内容が暗くなる等の影響がある。
-     *
-     * @return カメラから取得した {@link CaptureResult#CONTROL_AE_STATE}
-     */
-    private Integer startPreCapture(CameraCaptureSession session, Surface imageSurface, @Nullable CameraEnvironmentRequest env) throws CameraException, CameraAccessException {
-        CaptureRequest.Builder builder = newCaptureRequest(env, CameraDevice.TEMPLATE_PREVIEW);
-        builder.addTarget(imageSurface);
-        builder.set(CaptureRequest.JPEG_ORIENTATION, getJpegOrientation());
-//        builder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
-//        builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
-
-        Holder<CameraException> errorHolder = new Holder<>();
-        Holder<Boolean> completedHolder = new Holder<>();
-        Holder<Integer> stateResult = new Holder<>();
-        session.stopRepeating();
-        session.setRepeatingRequest(builder.build(), new CameraCaptureSession.CaptureCallback() {
-            Integer mOldAfState;
-
-            Integer mOldAeState;
-
-            @Override
-            public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
-                Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-                Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
-                if (aeState != null) {
-                    if (!aeState.equals(mOldAeState)) {
-
-                    }
-                }
-                CameraLog.hardware("onCaptureCompleted :: pre-capture");
-                CameraLog.hardware("  - AE State :: " + aeState);
-                CameraLog.hardware("  - AF State :: " + afState);
-
-//                completedHolder.set(Boolean.TRUE);
-//                stateResult.set(afState);
-            }
-
-            @Override
-            public void onCaptureFailed(CameraCaptureSession session, CaptureRequest request, CaptureFailure failure) {
-                errorHolder.set(new PictureFailedException("PreCapture Failed"));
-            }
-        }, mControlHandler);
-
-        while (errorHolder.get() == null && completedHolder.get() == null) {
-            Util.sleep(1);
-        }
-
-        if (errorHolder.get() != null) {
-            throw errorHolder.get();
-        }
-
-        return stateResult.get();
-    }
-
     PictureData takePictureImpl(@Nullable CameraEnvironmentRequest env) throws CameraException {
         if (mPreviewRequest != null && !isPreviewNow()) {
             throw new IllegalStateException("Preview not started");
@@ -486,12 +425,7 @@ public class Camera2ControlManager extends CameraControlManager {
 
         CameraCaptureSession session = getSession();
         try {
-//            if (mPreviewRequest != null) {
-//                // 環境光等の事前セットアップを行う
-//                // これを行わない場合、例えば室内であれば撮影内容が暗くなる等の副作用が出る
-//                startPreCapture(session, mPreviewSurface.getNativeSurface(mPreviewRequest.getPreviewSize()), env);
-//            }
-
+            
             Holder<CameraException> errorHolder = new Holder<>();
             Holder<PictureData> resultHolder = new Holder<>();
             Holder<Boolean> captureCompletedHolder = new Holder<>();
