@@ -2,6 +2,7 @@
 <resources>
 
     <!-- シーン認識 -->
+    <string name="Camera.Scene.off">オフ</string>
     <string name="Camera.Scene.auto">自動</string>
     <string name="Camera.Scene.portrait">人物</string>
     <string name="Camera.Scene.landscape">風景</string>

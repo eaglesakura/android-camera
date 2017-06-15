@@ -5,10 +5,13 @@ import com.eaglesakura.android.camera.preview.CameraSurface;
 import com.eaglesakura.android.camera.preview.OffscreenPreviewSurface;
 import com.eaglesakura.android.camera.spec.CameraType;
 import com.eaglesakura.android.camera.spec.FlashMode;
+import com.eaglesakura.android.camera.spec.FocusMode;
 import com.eaglesakura.android.camera.spec.WhiteBalance;
-import com.eaglesakura.android.device.external.Storage;
 import com.eaglesakura.android.devicetest.DeviceTestCase;
+import com.eaglesakura.android.util.ContextUtil;
 import com.eaglesakura.android.util.ImageUtil;
+import com.eaglesakura.util.RandomUtil;
+import com.eaglesakura.util.StringUtil;
 import com.eaglesakura.util.Util;
 
 import org.junit.Test;
@@ -48,13 +51,10 @@ public class CameraConnectManagerTest extends DeviceTestCase {
         }
     }
 
-    @Test
-    public void 撮影を行う() throws Throwable {
-        CameraSpec spec = CameraSpec.getSpecs(getContext(), CameraType.Front);
-
+    void testShot(CameraSpec spec) throws Throwable {
         CameraPreviewRequest previewRequest = new CameraPreviewRequest().size(spec.getPreviewSize(640, 480));
         CameraConnectRequest connectRequest = new CameraConnectRequest(spec.getType());
-        CameraEnvironmentRequest envRequest = new CameraEnvironmentRequest().flash(FlashMode.SETTING_OFF);
+        CameraEnvironmentRequest envRequest = new CameraEnvironmentRequest().flash(FlashMode.SETTING_OFF).focus(FocusMode.SETTING_CONTINUOUS_PICTURE);
         CameraPictureShotRequest shotRequest =
                 new CameraPictureShotRequest(spec.getFullJpegPictureSize())
                         .location(35.658598, 139.743271);
@@ -70,13 +70,16 @@ public class CameraConnectManagerTest extends DeviceTestCase {
 
             assertTrue(cameraManager.isConnected());
 
+            Util.sleep(1000 * 2);
+
             PictureData picture = cameraManager.takePicture(envRequest);
 
             assertNotNull(picture);
             assertEquals(picture.width, shotRequest.getCaptureSize().getWidth());
             assertEquals(picture.height, shotRequest.getCaptureSize().getHeight());
 
-            File outFile = new File(Storage.getExternalDataStorage(getContext()).getPath(), "junit/testshot.jpg");
+            File outFile = new File(getTestContext().getExternalFilesDir(null), StringUtil.format("shot/%d-%s.jpg", System.currentTimeMillis(), spec.getType().name()));
+            outFile.getParentFile().mkdirs();
             FileOutputStream os = new FileOutputStream(outFile);
             os.write(picture.buffer);
             os.flush();
@@ -96,5 +99,11 @@ public class CameraConnectManagerTest extends DeviceTestCase {
 
             assertFalse(cameraManager.isConnected());
         }
+    }
+
+    @Test
+    public void 撮影を行う() throws Throwable {
+        testShot(CameraSpec.getSpecs(getContext(), CameraType.Back));
+        testShot(CameraSpec.getSpecs(getContext(), CameraType.Front));
     }
 }

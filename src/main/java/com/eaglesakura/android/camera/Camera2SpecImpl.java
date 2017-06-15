@@ -3,6 +3,7 @@ package com.eaglesakura.android.camera;
 import com.eaglesakura.android.camera.error.CameraAccessFailedException;
 import com.eaglesakura.android.camera.error.CameraException;
 import com.eaglesakura.android.camera.error.CameraNotFoundException;
+import com.eaglesakura.android.camera.log.CameraLog;
 import com.eaglesakura.android.camera.spec.CameraType;
 import com.eaglesakura.android.camera.spec.CaptureFormat;
 import com.eaglesakura.android.camera.spec.CaptureSize;
@@ -59,6 +60,7 @@ public class Camera2SpecImpl {
         sFocusModeMap.put(FocusMode.SETTING_INFINITY, CameraCharacteristics.CONTROL_AF_MODE_OFF);
 
 
+        sSceneModeMap.put(Scene.SETTING_OFF, CameraCharacteristics.CONTROL_MODE_OFF);
         sSceneModeMap.put(Scene.SETTING_AUTO, CameraCharacteristics.CONTROL_MODE_AUTO);
         sSceneModeMap.put(Scene.SETTING_PORTRAIT, CameraCharacteristics.CONTROL_SCENE_MODE_PORTRAIT);
         sSceneModeMap.put(Scene.SETTING_LANDSCAPE, CameraCharacteristics.CONTROL_SCENE_MODE_LANDSCAPE);
@@ -69,6 +71,13 @@ public class Camera2SpecImpl {
         sSceneModeMap.put(Scene.SETTING_SPORTS, CameraCharacteristics.CONTROL_SCENE_MODE_SPORTS);
         sSceneModeMap.put(Scene.SETTING_PARTY, CameraCharacteristics.CONTROL_SCENE_MODE_PARTY);
         sSceneModeMap.put(Scene.SETTING_DOCUMENT, CameraCharacteristics.CONTROL_SCENE_MODE_BARCODE);
+
+        sSceneModeMap.put(Scene.SETTING_SUNSET, CameraCharacteristics.CONTROL_SCENE_MODE_SUNSET);
+        sSceneModeMap.put(Scene.SETTING_STEADYPHOTO, CameraCharacteristics.CONTROL_SCENE_MODE_STEADYPHOTO);
+        sSceneModeMap.put(Scene.SETTING_FIREWORKS, CameraCharacteristics.CONTROL_SCENE_MODE_FIREWORKS);
+        sSceneModeMap.put(Scene.SETTING_CANDLELIGHT, CameraCharacteristics.CONTROL_SCENE_MODE_CANDLELIGHT);
+        sSceneModeMap.put(Scene.SETTING_THEATRE, CameraCharacteristics.CONTROL_SCENE_MODE_THEATRE);
+        sSceneModeMap.put(Scene.SETTING_ACTION, CameraCharacteristics.CONTROL_SCENE_MODE_ACTION);
 
         sWhiteBalanceMap.put(WhiteBalance.SETTING_AUTO, CameraCharacteristics.CONTROL_AWB_MODE_AUTO);
         sWhiteBalanceMap.put(WhiteBalance.SETTING_INCANDESCENT, CameraCharacteristics.CONTROL_AWB_MODE_INCANDESCENT);
@@ -218,6 +227,8 @@ public class Camera2SpecImpl {
             Scene value = CollectionUtil.findKeyFromValue(sSceneModeMap, mode);
             if (value != null) {
                 result.add(value);
+            } else {
+                CameraLog.hardware("Not Supported scene[%d][0x%x]", mode, mode);
             }
         }
 
@@ -258,7 +269,7 @@ public class Camera2SpecImpl {
         return sSceneModeMap.get(scene);
     }
 
-    static int toAeModeInt(FocusMode mode) {
+    static int toAfModeInt(FocusMode mode) {
         return sFocusModeMap.get(mode);
     }
 

@@ -13,6 +13,7 @@ import com.eaglesakura.android.thread.AsyncHandler;
 import com.eaglesakura.android.util.AndroidThreadUtil;
 import com.eaglesakura.android.util.ContextUtil;
 import com.eaglesakura.thread.Holder;
+import com.eaglesakura.util.StringUtil;
 import com.eaglesakura.util.Util;
 
 import android.annotation.TargetApi;
@@ -170,7 +171,13 @@ public class Camera2ControlManager extends CameraControlManager {
                     throw errorHolder.get();
                 }
 
-                return cameraDeviceHolder.get();
+                CameraDevice cameraDevice = cameraDeviceHolder.get();
+
+                if (cameraDevice == null) {
+                    throw new CameraAccessFailedException("CameraDevice is null");
+                }
+
+                return cameraDevice;
             } catch (CameraAccessException e) {
                 throw new CameraAccessFailedException(e);
             } catch (SecurityException e) {
@@ -204,7 +211,7 @@ public class Camera2ControlManager extends CameraControlManager {
 
         mTaskQueue.await(() -> {
             if (!isConnected()) {
-                throw new IllegalStateException("not conencted");
+                throw new IllegalStateException("not connencted");
             }
 
             try {
@@ -241,18 +248,23 @@ public class Camera2ControlManager extends CameraControlManager {
     private int getJpegOrientation() {
         int sensorOrientation = mCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
         int deviceRotateDegree = ContextUtil.getDeviceRotateDegree(mContext);
+        int jpegOrientation;
 
+        // (360 * 2)を加算しているのは、最大で-270-270の角度を正の値に補正するためである
         if (mConnectRequest.getCameraType() == CameraType.Back) {
-            deviceRotateDegree = (360 - sensorOrientation + deviceRotateDegree) % 360;
+//            jpegOrientation = (sensorOrientation + deviceRotateDegree + (360 * 2)) % 360;
+            jpegOrientation = ((180 - (sensorOrientation + deviceRotateDegree)) + (360 * 2)) % 360;
         } else {
-            deviceRotateDegree = (sensorOrientation + deviceRotateDegree + 360) % 360;
+            jpegOrientation = (sensorOrientation + deviceRotateDegree + (360 * 2)) % 360;
         }
-        return deviceRotateDegree;
+
+        CameraLog.hardware("Camera[%s] Orientation sensor[deg %d] device[deg %d] Jpeg[deg %d]", mConnectRequest.getCameraType().name(), sensorOrientation, deviceRotateDegree, jpegOrientation);
+        return jpegOrientation;
     }
 
     private CaptureRequest.Builder newCaptureRequest(CameraEnvironmentRequest env, int template) throws CameraAccessException {
         if (mCamera == null) {
-            throw new CameraAccessException(CameraAccessException.CAMERA_ERROR, "Camera is Null(2)");
+            throw new CameraAccessException(CameraAccessException.CAMERA_ERROR, "connect() not called");
         }
         CaptureRequest.Builder request = mCamera.createCaptureRequest(template);
 
@@ -263,16 +275,14 @@ public class Camera2ControlManager extends CameraControlManager {
 
             if (env.getFocusMode() != null) {
                 FocusMode mode = env.getFocusMode();
+
+                // AFモード設定
+                request.set(CaptureRequest.CONTROL_AF_MODE, Camera2SpecImpl.toAfModeInt(mode));
+
                 if (mode == FocusMode.SETTING_INFINITY) {
                     // https://developer.android.com/reference/android/hardware/camera2/CameraCharacteristics.html
                     // LEGACY devices will support OFF mode only if they support focusing to infinity (by also setting android.lens.focusDistance to 0.0f).
                     request.set(CaptureRequest.LENS_FOCUS_DISTANCE, 0.0f);
-                } else if (mode == FocusMode.SETTING_AUTO) {
-                    request.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
-                    request.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
-
-                } else {
-                    request.set(CaptureRequest.CONTROL_AF_MODE, Camera2SpecImpl.toAeModeInt(mode));
                 }
             }
 
@@ -289,7 +299,7 @@ public class Camera2ControlManager extends CameraControlManager {
     }
 
     @NonNull
-    private CameraCaptureSession getSession() throws CameraException {
+    private synchronized CameraCaptureSession getSession() throws CameraException {
         if (mCaptureSession != null) {
             return mCaptureSession;
         }
@@ -310,7 +320,7 @@ public class Camera2ControlManager extends CameraControlManager {
         Holder<CameraException> errorHolder = new Holder<>();
         Holder<CameraCaptureSession> sessionHolder = new Holder<>();
         if (mCamera == null) {
-            throw new CameraAccessFailedException("Camera is Null(1)");
+            throw new CameraAccessFailedException("connect() not called");
         }
 
         try {
@@ -349,11 +359,35 @@ public class Camera2ControlManager extends CameraControlManager {
             // プレビューを開始する
             if (mPreviewCaptureRequest == null) {
                 CaptureRequest.Builder builder = newCaptureRequest(env, CameraDevice.TEMPLATE_PREVIEW);
+                builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
                 builder.addTarget(mPreviewSurface.getNativeSurface(mPreviewRequest.getPreviewSize()));
                 mPreviewCaptureRequest = builder;
             }
             previewSession.stopRepeating();
-            previewSession.setRepeatingRequest(mPreviewCaptureRequest.build(), null, null);
+            previewSession.setRepeatingRequest(mPreviewCaptureRequest.build(), new CameraCaptureSession.CaptureCallback() {
+                Integer mOldAfState;
+
+                Integer mOldAeState;
+
+                @Override
+                public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
+                    Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
+                    Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
+
+                    if (aeState != null) {
+                        if (!aeState.equals(mOldAeState)) {
+                            CameraLog.hardware("Preview AE State Changed :: [%s] -> [%s]", "" + mOldAeState, String.valueOf(aeState));
+                            mOldAeState = aeState;
+                        }
+                    }
+                    if (afState != null) {
+                        if (!afState.equals(mOldAfState)) {
+                            CameraLog.hardware("Preview AF State Changed :: [%s] -> [%s]", "" + mOldAfState, String.valueOf(afState));
+                            mOldAfState = afState;
+                        }
+                    }
+                }
+            }, mControlHandler);
 
             mFlags |= FLAG_NOW_PREVIEW;
         } catch (CameraAccessException e) {
@@ -384,46 +418,6 @@ public class Camera2ControlManager extends CameraControlManager {
         });
     }
 
-    /**
-     * 撮影前の事前AF/AEを行う。
-     *
-     * これは端末ごとの互換性を保つために行っている。
-     */
-    private void startPreCapture(CameraCaptureSession session, Surface imageSurface, @Nullable CameraEnvironmentRequest env) throws CameraException, CameraAccessException {
-        CaptureRequest.Builder builder = newCaptureRequest(env, CameraDevice.TEMPLATE_PREVIEW);
-        builder.addTarget(imageSurface);
-        builder.set(CaptureRequest.JPEG_ORIENTATION, getJpegOrientation());
-        builder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
-        builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
-
-        Holder<CameraException> errorHolder = new Holder<>();
-        Holder<Boolean> completedHolder = new Holder<>();
-        session.stopRepeating();
-        session.capture(builder.build(), new CameraCaptureSession.CaptureCallback() {
-            @Override
-            public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
-                Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-                CameraLog.hardware("onCaptureCompleted :: pre-capture");
-                CameraLog.hardware("  - AE State :: " + aeState);
-
-                completedHolder.set(Boolean.TRUE);
-            }
-
-            @Override
-            public void onCaptureFailed(CameraCaptureSession session, CaptureRequest request, CaptureFailure failure) {
-                errorHolder.set(new PictureFailedException("PreCapture Failed"));
-            }
-        }, mControlHandler);
-
-        while (errorHolder.get() == null && completedHolder.get() == null) {
-            Util.sleep(1);
-        }
-
-        if (errorHolder.get() != null) {
-            throw errorHolder.get();
-        }
-    }
-
     PictureData takePictureImpl(@Nullable CameraEnvironmentRequest env) throws CameraException {
         if (mPreviewRequest != null && !isPreviewNow()) {
             throw new IllegalStateException("Preview not started");
@@ -431,11 +425,7 @@ public class Camera2ControlManager extends CameraControlManager {
 
         CameraCaptureSession session = getSession();
         try {
-            if (mPreviewRequest != null) {
-                // この処理はおそらく必要ないと思われる
-                startPreCapture(session, mPreviewSurface.getNativeSurface(mPreviewRequest.getPreviewSize()), env);
-            }
-
+            
             Holder<CameraException> errorHolder = new Holder<>();
             Holder<PictureData> resultHolder = new Holder<>();
             Holder<Boolean> captureCompletedHolder = new Holder<>();
@@ -449,7 +439,7 @@ public class Camera2ControlManager extends CameraControlManager {
 
                 @Override
                 public void onCaptureFailed(CameraCaptureSession session, CaptureRequest request, CaptureFailure failure) {
-                    errorHolder.set(new PictureFailedException("Fail :: " + failure.getReason()));
+                    errorHolder.set(new PictureFailedException(StringUtil.format("Fail reason[%d]", failure.getReason())));
                 }
             };
 
@@ -476,7 +466,7 @@ public class Camera2ControlManager extends CameraControlManager {
                 builder.set(CaptureRequest.JPEG_GPS_LOCATION, loc);
             }
 
-            if (env.getFocusMode().equals(FocusMode.SETTING_AUTO)) {
+            if (FocusMode.SETTING_AUTO.equals(env.getFocusMode())) {
                 builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
                 builder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
             }

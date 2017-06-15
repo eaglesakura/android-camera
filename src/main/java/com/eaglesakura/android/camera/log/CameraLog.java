@@ -3,6 +3,7 @@ package com.eaglesakura.android.camera.log;
 import com.eaglesakura.android.camera.BuildConfig;
 import com.eaglesakura.log.Logger;
 import com.eaglesakura.util.EnvironmentUtil;
+import com.eaglesakura.util.StringUtil;
 
 import android.util.Log;
 
@@ -21,7 +22,7 @@ public class CameraLog {
             sAppLogger = new Logger.AndroidLogger(Log.class) {
                 @Override
                 protected int getStackDepth() {
-                    return super.getStackDepth() + 1;
+                    return super.getStackDepth();
                 }
             }.setStackInfo(BuildConfig.DEBUG);
         }
@@ -30,6 +31,6 @@ public class CameraLog {
 
     public static void hardware(String fmt, Object... args) {
         String tag = "Camera.HW";
-        Logger.out(Logger.LEVEL_DEBUG, tag, fmt, args);
+        sAppLogger.out(Logger.LEVEL_DEBUG, tag, StringUtil.format(fmt, args));
     }
 }
